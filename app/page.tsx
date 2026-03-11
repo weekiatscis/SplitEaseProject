@@ -126,7 +126,7 @@ export default function LoginPage() {
 
   return (
     <div className="h-screen w-full bg-[var(--login-bg)] flex items-center justify-center p-4">
-      <div className='card w-[80%] lg:w-[70%] md:w-[55%] flex justify-between h-[600px]'>
+      <div className='card w-[80%] lg:w-[70%] md:w-[55%] flex justify-between gap-12 h-[600px]'>
         <div
           className='w-full lg:w-1/2 px-4 lg:px-16 left h-full relative overflow-hidden'
           onMouseMove={handleMouseMove}
@@ -211,13 +211,12 @@ export default function LoginPage() {
         </div>
         <div className='hidden lg:block w-1/2 right h-full overflow-hidden'>
           <Image
-            src='https://images.pexels.com/photos/7102037/pexels-photo-7102037.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
-            loader={({ src }) => src}
+            src='/SplitEase.png'
             width={1000}
             height={1000}
             priority
             alt="Login decorative image"
-            className="w-full h-full object-cover transition-transform duration-300 opacity-30"
+            className="w-full h-full object-contain transition-transform duration-300 opacity-90"
           />
         </div>
       </div>
