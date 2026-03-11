@@ -1,0 +1,191 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg-primary: #F0F0F5;
+  --color-bg-card: #FFFFFF;
+  --color-bg-sidebar: #FFFFFF;
+  --color-primary: #4A6CF7;
+  --color-primary-light: rgba(74, 108, 247, 0.08);
+  --color-primary-hover: #3B5DE8;
+  --color-text-heading: #1E293B;
+  --color-text-body: #334155;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+
+  --color-success: #22C55E;
+  --color-success-bg: rgba(34, 197, 94, 0.1);
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-danger: #EF4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.1);
+
+  --color-gradient-purple-start: #7C3AED;
+  --color-gradient-purple-end: #4A6CF7;
+  --color-gradient-coral-start: #F97316;
+  --color-gradient-coral-end: #EC4899;
+  --color-gradient-navy-start: #1E293B;
+  --color-gradient-navy-end: #334155;
+
+  --color-chart-blue: #4A6CF7;
+  --color-chart-green: #22C55E;
+  --color-chart-purple: #7C3AED;
+  --color-chart-coral: #F97316;
+  --color-chart-fill: rgba(74, 108, 247, 0.12);
+}
+
+/* Dark mode overrides */
+.dark {
+  --color-bg-primary: #0F172A;
+  --color-bg-card: #1E293B;
+  --color-bg-sidebar: #1E293B;
+  --color-primary-light: rgba(74, 108, 247, 0.15);
+  --color-text-heading: #F1F5F9;
+  --color-text-body: #E2E8F0;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --color-success-bg: rgba(34, 197, 94, 0.15);
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-chart-fill: rgba(74, 108, 247, 0.2);
+}
+
+/* Smooth dark mode transitions */
+*,
+*::before,
+*::after {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke;
+  transition-duration: 300ms;
+  transition-timing-function: ease;
+}
+
+/* Exclude elements that should not have transitions */
+svg *,
+canvas,
+img,
+video {
+  transition-property: none;
+}
+
+/* Re-enable for specific SVG elements we want animated */
+.recharts-sector,
+.recharts-dot,
+.recharts-line path {
+  transition-property: opacity, transform;
+  transition-duration: 200ms;
+}
+
+/* Chart draw-on animation */
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: var(--line-length);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeInArea {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Pending badge pulse */
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Bell wiggle */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(15deg); }
+  40% { transform: rotate(-15deg); }
+  60% { transform: rotate(10deg); }
+  80% { transform: rotate(-10deg); }
+}
+
+/* Form shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.4s ease-in-out;
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse 2s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+.animate-draw-line {
+  animation: drawLine 1.5s ease-in-out forwards;
+}
+
+.animate-fade-area {
+  animation: fadeInArea 0.8s ease-out 0.5s forwards;
+  opacity: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* Login page variables — light mode */
+:root {
+  --login-bg: #F8F9FB;
+  --login-surface: #FFFFFF;
+  --login-muted-surface: #F1F3F5;
+  --login-border: #D1D5DB;
+  --login-text-primary: #1E293B;
+  --login-text-secondary: #64748B;
+  --login-heading: #0F172A;
+  --login-bg-2: #E2E8F0;
+  --login-text-primary-rgb: 30, 41, 59;
+}
+
+/* Base reset */
+body {
+  margin: 0;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-body);
+  font-family: var(--font-sans);
+}
