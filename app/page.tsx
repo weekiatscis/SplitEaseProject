@@ -190,7 +190,12 @@ export default function LoginPage() {
               <div className='flex gap-4 justify-center items-center'>
                 <button
                   type="submit"
-                  className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-md bg-[var(--login-border)] px-4 py-1.5 text-xs font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-[var(--login-text-primary)] cursor-pointer"
+                  disabled={!username || !password}
+                  className={`group/button relative inline-flex justify-center items-center overflow-hidden rounded-md px-4 py-1.5 text-xs font-normal text-white transition-all duration-300 ease-in-out cursor-pointer ${
+                    username && password
+                      ? 'bg-[var(--login-text-primary)] hover:scale-105 hover:shadow-lg hover:shadow-[var(--login-text-primary)]'
+                      : 'bg-[var(--login-border)] opacity-60 cursor-not-allowed'
+                  }`}
                 >
                   <span className="text-sm px-2 py-1">Sign In</span>
                   <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">

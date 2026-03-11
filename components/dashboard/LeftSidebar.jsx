@@ -5,8 +5,6 @@ import { motion } from 'framer-motion';
 import { Wallet } from 'lucide-react';
 import { navigationItems } from '@/lib/data/navigation';
 import NavItem from '@/components/sidebar/NavItem';
-import DarkModeToggle from '@/components/sidebar/DarkModeToggle';
-
 
 const navVariants = {
   hidden: {},
@@ -62,10 +60,8 @@ export default function LeftSidebar() {
         </motion.ul>
       </nav>
 
-      {/* Bottom section */}
-      <div className="mt-auto">
-        <DarkModeToggle />
-      </div>
+      {/* Bottom spacer */}
+      <div className="mt-auto" />
     </aside>
   );
 }

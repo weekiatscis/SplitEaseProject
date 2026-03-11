@@ -5,7 +5,7 @@ import { X, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { navigationItems } from '@/lib/data/navigation';
 import NavItem from '@/components/sidebar/NavItem';
-import DarkModeToggle from '@/components/sidebar/DarkModeToggle';
+
 import PremiumCard from '@/components/sidebar/PremiumCard';
 
 export default function MobileNav({ isOpen, onClose }) {
@@ -74,7 +74,6 @@ export default function MobileNav({ isOpen, onClose }) {
             </nav>
 
             <div className="mt-auto">
-              <DarkModeToggle />
               <div className="mt-2">
                 <PremiumCard />
               </div>

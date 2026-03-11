@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Search, Bell, Settings, Menu } from 'lucide-react';
+import DarkModeToggle from '@/components/sidebar/DarkModeToggle';
 
 export default function Header({ onMenuToggle }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [bellWiggle, setBellWiggle] = useState(false);
-
   const triggerBellWiggle = () => {
     setBellWiggle(true);
     setTimeout(() => setBellWiggle(false), 400);
@@ -30,30 +30,34 @@ export default function Header({ onMenuToggle }) {
         </div>
       </div>
 
-      {/* Center: search */}
-      <div className="hidden sm:block relative">
-        <Search
-          size={16}
-          className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-150
-            ${searchFocused ? 'text-primary' : 'text-text-muted'}`}
-        />
-        <input
-          type="text"
-          placeholder="Search"
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          className={`
-            pl-9 pr-4 py-2.5 rounded-xl bg-bg-card border border-border text-sm text-text-body
-            placeholder:text-text-muted outline-none
-            transition-all duration-200 ease-out
-            focus:border-primary focus:ring-2 focus:ring-primary/15
-            ${searchFocused ? 'w-80' : 'w-52'}
-          `}
-        />
-      </div>
-
-      {/* Right: icons + avatar */}
+      {/* Right: search + icons + avatar */}
       <div className="flex items-center gap-2">
+        {/* Search */}
+        <div className="hidden sm:block relative">
+          <Search
+            size={16}
+            className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-150
+              ${searchFocused ? 'text-primary' : 'text-text-muted'}`}
+          />
+          <input
+            type="text"
+            placeholder="Search"
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            className={`
+              pl-9 pr-4 py-2.5 rounded-xl bg-bg-card border border-border text-sm text-text-body
+              placeholder:text-text-muted outline-none
+              transition-all duration-200 ease-out
+              focus:border-primary focus:ring-2 focus:ring-primary/15
+              ${searchFocused ? 'w-80' : 'w-52'}
+            `}
+          />
+        </div>
+
+        {/* Dark mode toggle */}
+        <DarkModeToggle />
+
+        {/* Notifications */}
         <button
           onClick={triggerBellWiggle}
           className={`relative p-2.5 rounded-xl bg-bg-card border border-border text-text-secondary
