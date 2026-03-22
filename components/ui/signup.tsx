@@ -3,19 +3,20 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
-import Image from 'next/image';
-import Link from 'next/link';
-import AppInput from '@/components/ui/AppInput';
+import Image from 'next/image'
+import Link from 'next/link'
+import AppInput from '@/components/ui/AppInput'
+import { createUser } from '@/lib/api/auth'
 
-const Page = () => {
+const SignUpPage = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
-  const { login } = useAuth();
   const router = useRouter();
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -38,15 +39,20 @@ const Page = () => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
-      setError('Please enter both email and password');
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
     setIsLoading(true);
     try {
-      await login(email, password);
-      router.push('/dashboard');
+      await createUser(name, email, password);
+      router.push('/');
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -58,7 +64,7 @@ const Page = () => {
     }
   };
 
-   const socialIcons = [
+  const socialIcons = [
     {
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4zm9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8A1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5a5 5 0 0 1-5 5a5 5 0 0 1-5-5a5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3a3 3 0 0 0 3 3a3 3 0 0 0 3-3a3 3 0 0 0-3-3"/></svg>,
       href: '#',
@@ -94,9 +100,9 @@ const Page = () => {
             }}
           />
           <div className="form-container sign-in-container h-full z-10">
-            <form className='text-center py-10 md:py-20 grid gap-2 h-full' onSubmit={handleSubmit}>
-              <div className='grid gap-4 md:gap-6 mb-2'>
-                <h1 className='text-3xl md:text-4xl font-extrabold'>Sign in</h1>
+            <form className='text-center py-10 md:py-14 grid gap-2 h-full' onSubmit={handleSubmit}>
+              <div className='grid gap-3 md:gap-4 mb-2'>
+                <h1 className='text-3xl md:text-4xl font-extrabold'>Create Account</h1>
                 <div className="social-container">
                   <div className="flex items-center justify-center">
                     <ul className="flex gap-3 md:gap-4">
@@ -122,9 +128,15 @@ const Page = () => {
                   </ul>
                 </div>
               </div>
-              <span className='text-sm'>or use your account</span>
+              <span className='text-sm'>or use your email for registration</span>
             </div>
-            <div className='grid gap-4 items-center'>
+            <div className='grid gap-3 items-center'>
+                <AppInput
+                  placeholder="Name"
+                  type="text"
+                  value={name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                />
                 <AppInput
                   placeholder="Email"
                   type="email"
@@ -137,27 +149,32 @@ const Page = () => {
                   value={password}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 />
+                <AppInput
+                  placeholder="Confirm Password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+                />
               </div>
               {error && (
                 <p className="text-red-500 text-sm animate-shake">{error}</p>
               )}
-              <a href="#" className='font-light text-sm md:text-md'>Forgot your password?</a>
               <div className='flex gap-4 justify-center items-center'>
                  <button
                   type="submit"
-                  disabled={!email || !password || isLoading}
+                  disabled={!name || !email || !password || !confirmPassword || isLoading}
                   className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-md bg-[var(--color-border)] px-4 py-1.5 text-xs font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-[var(--color-text-primary)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                 >
-                <span className="text-sm px-2 py-1">{isLoading ? 'Signing in...' : 'Sign In'}</span>
+                <span className="text-sm px-2 py-1">{isLoading ? 'Creating account...' : 'Sign Up'}</span>
                 <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:animate-shine">
                   <div className="relative h-full w-8 bg-white/20" />
                 </div>
               </button>
               </div>
               <p className="text-sm text-[var(--color-text-secondary)]">
-                Don&apos;t have an account?{' '}
-                <Link href="/signup" className="font-semibold text-[var(--color-text-primary)] hover:underline">
-                  Sign Up
+                Already have an account?{' '}
+                <Link href="/" className="font-semibold text-[var(--color-text-primary)] hover:underline">
+                  Sign In
                 </Link>
               </p>
             </form>
@@ -169,7 +186,7 @@ const Page = () => {
               width={1000}
               height={1000}
               priority
-              alt="Login decorative image"
+              alt="Sign up decorative image"
               className="w-full h-full object-contain transition-transform duration-300 opacity-90"
             />
        </div>
@@ -178,4 +195,4 @@ const Page = () => {
   )
 }
 
-export default Page
+export default SignUpPage

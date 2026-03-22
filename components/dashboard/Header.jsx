@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { Search, Bell, Settings, Menu } from 'lucide-react';
 import DarkModeToggle from '@/components/sidebar/DarkModeToggle';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Header({ onMenuToggle }) {
+  const { user } = useAuth();
   const [searchFocused, setSearchFocused] = useState(false);
   const [bellWiggle, setBellWiggle] = useState(false);
   const triggerBellWiggle = () => {
@@ -81,11 +83,10 @@ export default function Header({ onMenuToggle }) {
 
         <div className="flex items-center gap-2.5 ml-2">
           <div className="text-right hidden lg:block">
-            <p className="text-sm font-semibold text-text-heading leading-tight">Benjamin</p>
-            <p className="text-[11px] text-text-muted leading-tight">Newyork, USA</p>
+            <p className="text-sm font-semibold text-text-heading leading-tight">{user?.Name ?? 'User'}</p>
           </div>
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-gradient-purple-start flex items-center justify-center text-white text-xs font-bold">
-            B
+            {user?.Name ? user.Name.charAt(0) : 'U'}
           </div>
         </div>
       </div>
