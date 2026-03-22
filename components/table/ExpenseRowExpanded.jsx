@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
-import { Check, X } from 'lucide-react';
+import { CheckIcon, XIcon } from '@phosphor-icons/react';
 
 export default function ExpenseRowExpanded({ expense }) {
   return (
@@ -32,9 +32,9 @@ export default function ExpenseRowExpanded({ expense }) {
                   <p className="text-[11px] text-text-muted">{formatCurrency(split.amount)}</p>
                 </div>
                 {split.paid ? (
-                  <Check size={14} className="text-success" />
+                  <CheckIcon size={14} className="text-success" />
                 ) : (
-                  <X size={14} className="text-danger" />
+                  <XIcon size={14} className="text-danger" />
                 )}
               </div>
             ))}

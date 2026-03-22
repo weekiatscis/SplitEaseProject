@@ -5,18 +5,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-
-  --animate-shine: shine 0.7s ease-in-out forwards;
-
-  @keyframes shine {
-    0% {
-      transform: skew(-13deg) translateX(-100%);
-    }
-    100% {
-      transform: skew(-13deg) translateX(100%);
-    }
-  }
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --color-bg-primary: #F0F0F5;
   --color-bg-card: #FFFFFF;
@@ -57,13 +46,13 @@
   --color-bg-primary: #0F172A;
   --color-bg-card: #1E293B;
   --color-bg-sidebar: #1E293B;
-  --color-primary-light: rgba(74, 108, 247, 0.15);
+  --color-primary-light: rgba(74, 108, 247, 0.20);
   --color-text-heading: #F1F5F9;
   --color-text-body: #E2E8F0;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
+  --color-text-secondary: #A8B8CC;
+  --color-text-muted: #8B9DB8;
   --color-border: #334155;
-  --color-border-light: #1E293B;
+  --color-border-light: #2D3B4E;
   --color-success-bg: rgba(34, 197, 94, 0.15);
   --color-warning-bg: rgba(245, 158, 11, 0.15);
   --color-danger-bg: rgba(239, 68, 68, 0.15);
@@ -74,8 +63,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.506 0.195 264.052);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -113,7 +102,7 @@
 *::before,
 *::after {
   transition-property: background-color, color, border-color, box-shadow, fill, stroke, transform;
-  transition-duration: 300ms;
+  transition-duration: 150ms;
   transition-timing-function: ease;
 }
 
@@ -138,6 +127,7 @@ video {
   from {
     stroke-dashoffset: var(--line-length);
   }
+
   to {
     stroke-dashoffset: 0;
   }
@@ -147,6 +137,7 @@ video {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -154,50 +145,27 @@ video {
 
 /* Pending badge pulse */
 @keyframes subtlePulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
-    opacity: 0.7;
+    opacity: 0.85;
   }
-}
-
-/* Bell wiggle */
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  20% { transform: rotate(15deg); }
-  40% { transform: rotate(-15deg); }
-  60% { transform: rotate(10deg); }
-  80% { transform: rotate(-10deg); }
-}
-
-/* Form shake */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-}
-
-.animate-wiggle {
-  animation: wiggle 0.4s ease-in-out;
 }
 
 .animate-subtle-pulse {
   animation: subtlePulse 2s ease-in-out infinite;
 }
 
-.animate-shake {
-  animation: shake 0.3s ease-in-out;
-}
-
 .animate-draw-line {
-  animation: drawLine 1.5s ease-in-out forwards;
+  animation: drawLine 0.6s ease-in-out forwards;
 }
 
 .animate-fade-area {
-  animation: fadeInArea 0.8s ease-out 0.5s forwards;
+  animation: fadeInArea 0.4s ease-out 0.15s forwards;
   opacity: 0;
 }
 
@@ -236,7 +204,7 @@ video {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0.506 0.195 264.052);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -253,7 +221,7 @@ video {
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -308,8 +276,8 @@ body {
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
+  --color-primary: #4A6CF7;
+  --color-primary-foreground: #FFFFFF;
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);

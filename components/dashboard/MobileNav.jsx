@@ -1,15 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import { XIcon, WalletIcon } from '@phosphor-icons/react';
+import { usePathname } from 'next/navigation';
 import { navigationItems } from '@/lib/data/navigation';
 import NavItem from '@/components/sidebar/NavItem';
 
 import PremiumCard from '@/components/sidebar/PremiumCard';
 
 export default function MobileNav({ isOpen, onClose }) {
-  const [activeNav, setActiveNav] = useState('expenses');
+  const pathname = usePathname();
 
   return (
     <AnimatePresence>
@@ -36,8 +36,8 @@ export default function MobileNav({ isOpen, onClose }) {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-5">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
-                  <Wallet size={18} className="text-white" />
+                <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+                  <WalletIcon size={18} className="text-white" />
                 </div>
                 <div>
                   <h1 className="text-base font-bold text-text-heading leading-tight">SplitEase</h1>
@@ -50,23 +50,21 @@ export default function MobileNav({ isOpen, onClose }) {
                   focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 aria-label="Close menu"
               >
-                <X size={18} />
+                <XIcon size={18} />
               </button>
             </div>
 
             {/* Nav */}
             <nav aria-label="Mobile navigation" className="flex-1 px-3 overflow-y-auto">
-              <ul className="flex flex-col gap-0.5 list-none p-0 m-0">
+              <ul className="flex flex-col gap-1 list-none p-0 m-0">
                 {navigationItems.map((item) => (
                   <li key={item.id}>
                     <NavItem
                       icon={item.icon}
                       label={item.label}
-                      isActive={activeNav === item.id}
-                      onClick={() => {
-                        setActiveNav(item.id);
-                        onClose();
-                      }}
+                      href={item.href}
+                      isActive={pathname === item.href && (item.href !== '/dashboard' || item.id === 'dashboard')}
+                      onClick={onClose}
                     />
                   </li>
                 ))}

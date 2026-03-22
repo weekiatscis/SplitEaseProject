@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, SlidersHorizontal, Calendar, ArrowUpDown } from 'lucide-react';
+import { MagnifyingGlassIcon, SlidersHorizontalIcon, CalendarBlankIcon, ArrowsDownUpIcon } from '@phosphor-icons/react';
+import { Button } from '@/components/ui/button';
+import AppInput from '@/components/ui/AppInput';
 import { expenses as initialExpenses } from '@/lib/data/expenses';
 import ExpenseRow from './ExpenseRow';
 import ExpenseRowExpanded from './ExpenseRowExpanded';
@@ -62,34 +64,33 @@ export default function ExpenseTable() {
   ];
 
   return (
-    <section aria-label="Recent expenses" className="bg-bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+    <section aria-label="Recent expenses" className="bg-bg-card rounded-xl border border-border shadow-sm">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-5 pb-4">
         <h3 className="text-base font-semibold text-text-heading">Card List</h3>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 text-xs text-text-secondary px-3 py-1.5 rounded-lg border border-border hover:border-primary/30 hover:text-primary transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none">
-            <Calendar size={13} />
+          <Button variant="outline" size="sm">
+            <CalendarBlankIcon size={13} />
             This Week
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Search + Filters */}
       <div className="flex flex-wrap items-center gap-3 px-5 pb-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-lg bg-bg-primary border border-border text-sm text-text-body placeholder:text-text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all duration-150"
-          />
-        </div>
-        <button className="flex items-center gap-1.5 text-xs text-text-secondary px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:text-primary transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none">
-          <SlidersHorizontal size={13} />
+        <AppInput
+          variant="simple"
+          inputSize="sm"
+          placeholder="Search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          icon={<MagnifyingGlassIcon size={15} />}
+          className="flex-1 min-w-[200px]"
+        />
+        <Button variant="outline" size="sm">
+          <SlidersHorizontalIcon size={13} />
           Filters
-        </button>
+        </Button>
       </div>
 
       {/* Table */}
@@ -115,7 +116,7 @@ export default function ExpenseTable() {
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
-                    <ArrowUpDown size={11} className="opacity-40" />
+                    <ArrowsDownUpIcon size={11} className="opacity-40" />
                   </span>
                 </th>
               ))}

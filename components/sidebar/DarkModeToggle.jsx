@@ -1,6 +1,6 @@
 "use client";
 
-import { Sun, Moon } from 'lucide-react';
+import { SunIcon, MoonIcon } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -21,13 +21,13 @@ export default function DarkModeToggle() {
           className={`flex items-center justify-center py-1.5 px-2.5 rounded-full transition-all duration-200
             ${!isDark ? 'bg-bg-card text-text-heading shadow-sm' : 'text-text-muted'}`}
         >
-          <Sun size={14} />
+          <SunIcon size={14} />
         </div>
         <div
           className={`flex items-center justify-center py-1.5 px-2.5 rounded-full transition-all duration-200
             ${isDark ? 'bg-bg-card text-text-heading shadow-sm' : 'text-text-muted'}`}
         >
-          <Moon size={14} />
+          <MoonIcon size={14} />
         </div>
       </button>
     </div>

@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, Share2 } from 'lucide-react';
+import { TrendUpIcon, ShareNetworkIcon } from '@phosphor-icons/react';
 import { spendingTrendsData } from '@/lib/data/chartData';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
@@ -18,10 +18,10 @@ function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="bg-bg-card border border-border rounded-xl px-3 py-2 shadow-lg">
+    <div className="bg-bg-card border border-border rounded-lg px-3 py-2 shadow-md">
       <div className="flex items-center gap-2 mb-1">
         <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-medium px-1.5 py-0.5 rounded">
-          <Share2 size={10} />
+          <ShareNetworkIcon size={10} />
           Share
         </span>
       </div>
@@ -53,7 +53,7 @@ export default function SpendingTrendsChart() {
     <section
       ref={ref}
       aria-label="Spending trends chart"
-      className="bg-bg-card rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-5"
+      className="bg-bg-card rounded-xl border border-border shadow-sm p-5"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
@@ -66,7 +66,7 @@ export default function SpendingTrendsChart() {
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-text-secondary">Card Balance By time changing</p>
         <span className="flex items-center gap-1 text-xs font-medium text-success">
-          <TrendingUp size={13} />
+          <TrendUpIcon size={13} />
           +23.65%
         </span>
       </div>
@@ -111,7 +111,7 @@ export default function SpendingTrendsChart() {
                   stroke: '#fff',
                   strokeWidth: 2,
                 }}
-                animationDuration={1500}
+                animationDuration={600}
                 animationEasing="ease-in-out"
               />
             </AreaChart>

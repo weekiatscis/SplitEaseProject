@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { CaretDownIcon, CaretUpIcon } from '@phosphor-icons/react';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import StatusBadge from './StatusBadge';
 
@@ -31,7 +31,7 @@ export default function ExpenseRow({ expense, isExpanded, onToggle }) {
             focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
           aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
         >
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {isExpanded ? <CaretUpIcon size={16} /> : <CaretDownIcon size={16} />}
         </button>
       </td>
     </tr>

@@ -1,10 +1,10 @@
-import { Sparkles } from 'lucide-react';
+import { SparkleIcon } from '@phosphor-icons/react';
 
 export default function PremiumCard() {
   return (
-    <div className="mx-4 mb-4 p-4 rounded-2xl bg-gradient-to-br from-gradient-purple-start to-gradient-purple-end text-white">
+    <div className="mx-4 mb-4 p-4 rounded-xl bg-primary text-white">
       <div className="flex items-center gap-2 mb-2">
-        <Sparkles size={16} />
+        <SparkleIcon size={16} />
         <span className="text-xs font-medium opacity-90">Premium</span>
       </div>
       <p className="text-sm font-semibold mb-1">

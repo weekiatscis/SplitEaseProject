@@ -1,34 +1,32 @@
 "use client";
 
 import { useState } from 'react';
-import { Search, Bell, Settings, Menu } from 'lucide-react';
+import { MagnifyingGlassIcon, BellSimpleIcon, GearSixIcon, ListIcon, SignOutIcon } from '@phosphor-icons/react';
+import { Button } from '@/components/ui/button';
 import DarkModeToggle from '@/components/sidebar/DarkModeToggle';
 import { useAuth } from '@/context/AuthContext';
 
-export default function Header({ onMenuToggle }) {
-  const { user } = useAuth();
+export default function Header({ onMenuToggle, title = 'Expenses', subtitle = "Here's your overview this month." }) {
+  const { user, logout } = useAuth();
   const [searchFocused, setSearchFocused] = useState(false);
-  const [bellWiggle, setBellWiggle] = useState(false);
-  const triggerBellWiggle = () => {
-    setBellWiggle(true);
-    setTimeout(() => setBellWiggle(false), 400);
-  };
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   return (
     <header className="flex items-center justify-between gap-4 mb-6">
       {/* Left: menu button (mobile) + title */}
       <div className="flex items-center gap-3">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onMenuToggle}
-          className="md:hidden p-2 rounded-lg text-text-secondary hover:bg-primary-light
-            focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+          className="md:hidden"
           aria-label="Toggle menu"
         >
-          <Menu size={20} />
-        </button>
+          <ListIcon size={20} />
+        </Button>
         <div>
-          <h2 className="text-xl font-bold text-text-heading">Expenses</h2>
-          <p className="text-sm text-text-secondary">Here&apos;s your overview this month.</p>
+          <h2 className="text-lg font-semibold text-text-heading">{title}</h2>
+          <p className="text-sm text-text-secondary">{subtitle}</p>
         </div>
       </div>
 
@@ -36,7 +34,7 @@ export default function Header({ onMenuToggle }) {
       <div className="flex items-center gap-2">
         {/* Search */}
         <div className="hidden sm:block relative">
-          <Search
+          <MagnifyingGlassIcon
             size={16}
             className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-150
               ${searchFocused ? 'text-primary' : 'text-text-muted'}`}
@@ -46,13 +44,12 @@ export default function Header({ onMenuToggle }) {
             placeholder="Search"
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
-            className={`
-              pl-9 pr-4 py-2.5 rounded-xl bg-bg-card border border-border text-sm text-text-body
+            className="
+              w-64 pl-9 pr-4 py-2 rounded-lg bg-bg-card border border-border text-sm text-text-body
               placeholder:text-text-muted outline-none
-              transition-all duration-200 ease-out
+              transition-colors duration-150
               focus:border-primary focus:ring-2 focus:ring-primary/15
-              ${searchFocused ? 'w-80' : 'w-52'}
-            `}
+            "
           />
         </div>
 
@@ -60,34 +57,54 @@ export default function Header({ onMenuToggle }) {
         <DarkModeToggle />
 
         {/* Notifications */}
-        <button
-          onClick={triggerBellWiggle}
-          className={`relative p-2.5 rounded-xl bg-bg-card border border-border text-text-secondary
-            hover:text-text-heading hover:border-primary/30
-            focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none
-            ${bellWiggle ? 'animate-wiggle' : ''}`}
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative rounded-lg"
           aria-label="Notifications"
         >
-          <Bell size={18} />
+          <BellSimpleIcon size={18} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" />
-        </button>
+        </Button>
 
-        <button
-          className="p-2.5 rounded-xl bg-bg-card border border-border text-text-secondary
-            hover:text-text-heading hover:border-primary/30
-            focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-lg"
           aria-label="Settings"
         >
-          <Settings size={18} />
-        </button>
+          <GearSixIcon size={18} />
+        </Button>
 
-        <div className="flex items-center gap-2.5 ml-2">
-          <div className="text-right hidden lg:block">
-            <p className="text-sm font-semibold text-text-heading leading-tight">{user?.Name ?? 'User'}</p>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-gradient-purple-start flex items-center justify-center text-white text-xs font-bold">
-            {user?.Name ? user.Name.charAt(0) : 'U'}
-          </div>
+        <div className="relative ml-2">
+          <button
+            onClick={() => setShowProfileMenu((prev) => !prev)}
+            onBlur={() => setTimeout(() => setShowProfileMenu(false), 150)}
+            className="flex items-center gap-2.5 cursor-pointer"
+          >
+            <div className="text-right hidden lg:block">
+              <p className="text-sm font-semibold text-text-heading leading-tight">{user?.Name ?? 'User'}</p>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+              {user?.Name ? user.Name.charAt(0) : 'U'}
+            </div>
+          </button>
+
+          {showProfileMenu && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+              <div className="px-4 py-3 border-b border-border">
+                <p className="text-sm font-semibold text-text-heading truncate">{user?.Name ?? 'User'}</p>
+                <p className="text-xs text-text-muted truncate">{user?.Email}</p>
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-danger hover:bg-danger/10 transition-colors duration-150 cursor-pointer"
+              >
+                <SignOutIcon size={16} />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

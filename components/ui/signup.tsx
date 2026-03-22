@@ -91,7 +91,7 @@ const SignUpPage = () => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}>
           <div
-            className={`absolute pointer-events-none w-[500px] h-[500px] bg-gradient-to-r from-purple-300/30 via-blue-300/30 to-pink-300/30 rounded-full blur-3xl transition-opacity duration-200 ${
+            className={`absolute pointer-events-none w-[500px] h-[500px] bg-gradient-to-r from-primary/20 via-gradient-purple-start/20 to-gradient-coral-end/20 rounded-full blur-3xl transition-opacity duration-200 ${
               isHovering ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
@@ -118,7 +118,7 @@ const SignUpPage = () => {
                                   social.gradient || social.bg
                                 } scale-y-0 origin-bottom transition-transform duration-500 ease-in-out group-hover:scale-y-100`}
                               />
-                              <span className="text-[1.5rem] text-[hsl(203,92%,8%)] transition-all duration-500 ease-in-out z-[2] group-hover:text-[var(--color-text-primary)] group-hover:rotate-y-360">
+                              <span className="text-[1.5rem] text-text-heading transition-all duration-500 ease-in-out z-[2] group-hover:text-[var(--color-text-primary)] group-hover:rotate-y-360">
                                 {social.icon}
                               </span>
                             </a>
@@ -157,13 +157,13 @@ const SignUpPage = () => {
                 />
               </div>
               {error && (
-                <p className="text-red-500 text-sm animate-shake">{error}</p>
+                <p className="text-danger text-sm animate-shake">{error}</p>
               )}
               <div className='flex gap-4 justify-center items-center'>
                  <button
                   type="submit"
                   disabled={!name || !email || !password || !confirmPassword || isLoading}
-                  className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-md bg-[var(--color-border)] px-4 py-1.5 text-xs font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-[var(--color-text-primary)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+                  className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-md bg-primary px-4 py-1.5 text-xs font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-primary/30 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                 >
                 <span className="text-sm px-2 py-1">{isLoading ? 'Creating account...' : 'Sign Up'}</span>
                 <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:animate-shine">

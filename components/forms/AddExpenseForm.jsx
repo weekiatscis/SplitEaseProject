@@ -1,9 +1,9 @@
 "use client";
 
-import { useReducer, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Check } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { useReducer } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { SpinnerGapIcon, CheckIcon } from '@phosphor-icons/react';
+import AppInput from '@/components/ui/AppInput';
 
 const initialState = {
   status: 'idle', // idle | loading | success | resetting
@@ -37,7 +37,6 @@ function formReducer(state, action) {
 
 export default function AddExpenseForm() {
   const [state, dispatch] = useReducer(formReducer, initialState);
-  const buttonRef = useRef(null);
 
   const validate = () => {
     const errors = {};
@@ -58,22 +57,9 @@ export default function AddExpenseForm() {
 
     dispatch({ type: 'SUBMIT' });
 
-    // Loading → Success → Confetti → Reset
+    // Loading → Success → Reset
     setTimeout(() => {
       dispatch({ type: 'SUCCESS' });
-
-      // Fire confetti from button position
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        const x = (rect.left + rect.width / 2) / window.innerWidth;
-        const y = (rect.top + rect.height / 2) / window.innerHeight;
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { x, y },
-          colors: ['#4A6CF7', '#22C55E', '#7C3AED', '#F97316', '#EC4899'],
-        });
-      }
 
       setTimeout(() => {
         dispatch({ type: 'RESET' });
@@ -81,12 +67,12 @@ export default function AddExpenseForm() {
     }, 1500);
   };
 
-  const inputClass = (field) => `
-    w-full px-3 py-2.5 rounded-[10px] bg-bg-primary border text-sm text-text-body
+  const selectClass = (field) => `
+    w-full px-3 py-2.5 rounded-lg bg-bg-primary border text-sm text-text-body
     placeholder:text-text-muted outline-none
-    transition-all duration-150 ease-out
+    transition-colors duration-150
     focus:ring-2 focus:ring-primary/15 focus:border-primary
-    ${state.errors[field] ? 'border-danger animate-shake' : 'border-border'}
+    ${state.errors[field] ? 'border-danger' : 'border-border'}
   `;
 
   const labelClass = (field) => `
@@ -102,43 +88,35 @@ export default function AddExpenseForm() {
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5" noValidate>
-        <div>
-          <label htmlFor="card-number" className={labelClass('expenseName')}>
-            Card Number
-          </label>
-          <input
-            id="card-number"
-            type="text"
-            placeholder="**** **** **** ****"
-            value={state.expenseName}
-            onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'expenseName', value: e.target.value })}
-            className={inputClass('expenseName')}
-            aria-required="true"
-            aria-invalid={!!state.errors.expenseName}
-          />
-          {state.errors.expenseName && (
-            <p className="text-[11px] text-danger mt-1">{state.errors.expenseName}</p>
-          )}
-        </div>
+        <AppInput
+          variant="simple"
+          inputSize="sm"
+          label="Card Number"
+          placeholder="**** **** **** ****"
+          value={state.expenseName}
+          onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'expenseName', value: e.target.value })}
+          error={!!state.errors.expenseName}
+          aria-required="true"
+          aria-invalid={!!state.errors.expenseName}
+        />
+        {state.errors.expenseName && (
+          <p className="text-[11px] text-danger -mt-2">{state.errors.expenseName}</p>
+        )}
 
-        <div>
-          <label htmlFor="expiration" className={labelClass('totalAmount')}>
-            Expiration Card
-          </label>
-          <input
-            id="expiration"
-            type="text"
-            placeholder="12/24"
-            value={state.totalAmount}
-            onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'totalAmount', value: e.target.value })}
-            className={inputClass('totalAmount')}
-            aria-required="true"
-            aria-invalid={!!state.errors.totalAmount}
-          />
-          {state.errors.totalAmount && (
-            <p className="text-[11px] text-danger mt-1">{state.errors.totalAmount}</p>
-          )}
-        </div>
+        <AppInput
+          variant="simple"
+          inputSize="sm"
+          label="Expiration Card"
+          placeholder="12/24"
+          value={state.totalAmount}
+          onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'totalAmount', value: e.target.value })}
+          error={!!state.errors.totalAmount}
+          aria-required="true"
+          aria-invalid={!!state.errors.totalAmount}
+        />
+        {state.errors.totalAmount && (
+          <p className="text-[11px] text-danger -mt-2">{state.errors.totalAmount}</p>
+        )}
 
         <div>
           <label htmlFor="card-type" className={labelClass('group')}>
@@ -148,7 +126,7 @@ export default function AddExpenseForm() {
             id="card-type"
             value={state.group}
             onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'group', value: e.target.value })}
-            className={inputClass('group')}
+            className={selectClass('group')}
             aria-required="true"
             aria-invalid={!!state.errors.group}
           >
@@ -162,38 +140,29 @@ export default function AddExpenseForm() {
           )}
         </div>
 
-        <div>
-          <label htmlFor="name-on-card" className={labelClass('paidBy')}>
-            Name on Card
-          </label>
-          <input
-            id="name-on-card"
-            type="text"
-            placeholder="JK David"
-            value={state.paidBy}
-            onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'paidBy', value: e.target.value })}
-            className={inputClass('paidBy')}
-          />
-        </div>
+        <AppInput
+          variant="simple"
+          inputSize="sm"
+          label="Name on Card"
+          placeholder="JK David"
+          value={state.paidBy}
+          onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'paidBy', value: e.target.value })}
+        />
 
         {/* Submit button */}
-        <motion.button
-          ref={buttonRef}
+        <button
           type="submit"
           disabled={state.status !== 'idle'}
-          whileHover={state.status === 'idle' ? { scale: 1.02 } : {}}
-          whileTap={state.status === 'idle' ? { scale: 0.98 } : {}}
-          transition={{ duration: 0.1 }}
           className={`
-            w-full py-3 rounded-xl text-sm font-bold mt-2
+            w-full py-3 rounded-lg text-sm font-semibold mt-2
             flex items-center justify-center gap-2
-            transition-all duration-200 cursor-pointer
+            transition-colors duration-150 cursor-pointer
             focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none
-            disabled:cursor-not-allowed
+            disabled:cursor-not-allowed disabled:opacity-50
             ${
               state.status === 'success'
                 ? 'bg-success text-white'
-                : 'bg-danger text-white hover:opacity-90'
+                : 'bg-primary text-white hover:opacity-90'
             }
           `}
         >
@@ -218,25 +187,25 @@ export default function AddExpenseForm() {
                 transition={{ duration: 0.15 }}
                 className="flex items-center gap-2"
               >
-                <Loader2 size={16} className="animate-spin" />
+                <SpinnerGapIcon size={16} className="animate-spin" />
                 Adding...
               </motion.span>
             )}
             {state.status === 'success' && (
               <motion.span
                 key="success"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.15 }}
                 className="flex items-center gap-2"
               >
-                <Check size={16} />
+                <CheckIcon size={16} />
                 Done!
               </motion.span>
             )}
           </AnimatePresence>
-        </motion.button>
+        </button>
       </form>
     </section>
   );
