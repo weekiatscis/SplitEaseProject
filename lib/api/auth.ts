@@ -16,6 +16,12 @@ export interface CreateUserRequest {
   Password: string;
 }
 
+export interface UserListItem {
+  UserId: number;
+  Name: string;
+  Email: string;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function loginUser(email: string, password: string): Promise<LoginResponse> {
@@ -29,6 +35,12 @@ export async function loginUser(email: string, password: string): Promise<LoginR
     throw new Error(`Login request failed with status ${res.status}`);
   }
 
+  return res.json();
+}
+
+export async function getAllUsers(userId: number): Promise<UserListItem[]> {
+  const res = await fetch(`${API_BASE_URL}/GetAllUsers?UserId=${userId}`);
+  if (!res.ok) throw new Error(`GetAllUsers failed with status ${res.status}`);
   return res.json();
 }
 

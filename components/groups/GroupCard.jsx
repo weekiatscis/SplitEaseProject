@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { UsersThreeIcon, ArrowRightIcon, TrashIcon, UserPlusIcon, XIcon, SpinnerGapIcon, CheckIcon } from '@phosphor-icons/react';
+import { UsersThreeIcon, ArrowRightIcon, TrashIcon, UserPlusIcon, XIcon, SpinnerGapIcon, CheckIcon, ReceiptIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
-import { availableUsers } from '@/lib/data/users';
+import { getAllUsers } from '@/lib/api/auth';
+import { getGroupSummary } from '@/lib/api/expenses';
 import { useGroups } from '@/context/GroupContext';
+import { useAuth } from '@/context/AuthContext';
+import { formatCurrency } from '@/lib/utils/formatCurrency';
+import AddExpensePanel from './AddExpensePanel';
 
 // Generate initials from a name string
 function getInitials(name) {
@@ -19,16 +23,71 @@ function getInitials(name) {
 
 export default function GroupCard({ group, index = 0, onDelete }) {
   const { addMemberToGroup } = useGroups();
+  const { user: currentUser } = useAuth();
   const [showAddMember, setShowAddMember] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState('');
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [balances, setBalances] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [summaryVersion, setSummaryVersion] = useState(0);
 
   const members = group.GroupMembers || [];
 
+  // Fetch balances when details panel is opened
+  useEffect(() => {
+    if (!showDetails) return;
+
+    let cancelled = false;
+    setLoadingDetails(true);
+    getGroupSummary(group.Id)
+      .then((data) => {
+        if (!cancelled) setBalances(data.Balances || []);
+      })
+      .catch(() => {
+        if (!cancelled) setBalances([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDetails(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [showDetails, group.Id, summaryVersion]);
+
+  // Fetch all users when any panel needing users is opened
+  useEffect(() => {
+    if ((!showAddMember && !showAddExpense && !showDetails) || !currentUser) return;
+
+    let cancelled = false;
+    setLoadingUsers(true);
+    getAllUsers(currentUser.UserID)
+      .then((users) => {
+        if (!cancelled) setAllUsers(users);
+      })
+      .catch(() => {
+        if (!cancelled) setAddError('Failed to load users');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingUsers(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [showAddMember, showAddExpense, showDetails, currentUser]);
+
+  // Resolve userId to name (including current user since getAllUsers excludes them)
+  const resolveUserName = (userId) => {
+    if (currentUser && userId === currentUser.UserID) return currentUser.Name;
+    const found = allUsers.find((u) => u.UserId === userId);
+    return found ? found.Name : `User ${userId}`;
+  };
+
   // Filter out users already in the group
-  const availableToAdd = availableUsers.filter(
-    (u) => !members.some((m) => m.toLowerCase() === u.name.toLowerCase())
+  const availableToAdd = allUsers.filter(
+    (u) => !members.some((m) => m.toLowerCase() === u.Name.toLowerCase())
   );
 
   const toggleUserSelection = (userId) => {
@@ -101,6 +160,22 @@ export default function GroupCard({ group, index = 0, onDelete }) {
                 +{members.length - 4}
               </div>
             )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAddMember((prev) => !prev);
+                setShowAddExpense(false);
+                setShowDetails(false);
+                setSelectedUsers([]);
+                setAddError('');
+              }}
+              title="Add members"
+              className="w-8 h-8 rounded-full border-2 border-dashed border-border
+                flex items-center justify-center text-text-muted
+                hover:border-primary hover:text-primary transition-colors duration-150 cursor-pointer"
+            >
+              <UserPlusIcon size={14} />
+            </button>
           </div>
           <span className="text-xs text-text-muted ml-3">
             {members.length} member{members.length !== 1 ? 's' : ''}
@@ -129,16 +204,20 @@ export default function GroupCard({ group, index = 0, onDelete }) {
                   </Button>
                 </div>
 
-                {availableToAdd.length === 0 ? (
+                {loadingUsers ? (
+                  <div className="flex items-center justify-center py-3">
+                    <SpinnerGapIcon size={16} className="animate-spin text-text-muted" />
+                  </div>
+                ) : availableToAdd.length === 0 ? (
                   <p className="text-xs text-text-muted py-2">All available users are already members.</p>
                 ) : (
                   <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">
                     {availableToAdd.map((user) => {
-                      const isSelected = selectedUsers.includes(user.id);
+                      const isSelected = selectedUsers.includes(user.UserId);
                       return (
                         <button
-                          key={user.id}
-                          onClick={() => toggleUserSelection(user.id)}
+                          key={user.UserId}
+                          onClick={() => toggleUserSelection(user.UserId)}
                           className={`
                             flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-left text-xs
                             transition-colors duration-150
@@ -155,9 +234,9 @@ export default function GroupCard({ group, index = 0, onDelete }) {
                               : 'bg-primary/20 text-text-heading border-bg-card'
                             }
                           `}>
-                            {isSelected ? <CheckIcon size={12} /> : getInitials(user.name)}
+                            {isSelected ? <CheckIcon size={12} /> : getInitials(user.Name)}
                           </div>
-                          <span className="font-medium">{user.name}</span>
+                          <span className="font-medium">{user.Name}</span>
                         </button>
                       );
                     })}
@@ -190,26 +269,113 @@ export default function GroupCard({ group, index = 0, onDelete }) {
           )}
         </AnimatePresence>
 
+        {/* Add expense panel */}
+        <AnimatePresence>
+          {showAddExpense && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mb-3 overflow-hidden"
+            >
+              {loadingUsers ? (
+                <div className="bg-bg-primary rounded-lg p-3 border border-border-light flex items-center justify-center py-6">
+                  <SpinnerGapIcon size={16} className="animate-spin text-text-muted" />
+                </div>
+              ) : (
+                <AddExpensePanel
+                  group={group}
+                  allUsers={allUsers}
+                  onClose={() => setShowAddExpense(false)}
+                  onExpenseAdded={() => setSummaryVersion((v) => v + 1)}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Group summary / balances panel */}
+        <AnimatePresence>
+          {showDetails && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mb-3 overflow-hidden"
+            >
+              <div className="bg-bg-primary rounded-lg p-3 border border-border-light">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-text-heading">Balances</p>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => setShowDetails(false)}
+                  >
+                    <XIcon size={14} />
+                  </Button>
+                </div>
+
+                {loadingDetails ? (
+                  <div className="flex items-center justify-center py-3">
+                    <SpinnerGapIcon size={16} className="animate-spin text-text-muted" />
+                  </div>
+                ) : !balances || balances.length === 0 ? (
+                  <p className="text-xs text-text-muted py-2">No expenses recorded yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {balances.map((b) => (
+                      <div
+                        key={b.UserId}
+                        className="flex items-center justify-between px-2 py-1.5 rounded-md bg-bg-card text-xs"
+                      >
+                        <span className="text-text-body">{resolveUserName(b.UserId)}</span>
+                        <span className={`font-medium ${b.NetAmount >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {b.NetAmount >= 0 ? '+' : ''}{formatCurrency(b.NetAmount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Footer actions */}
         <div className="flex items-center justify-between pt-3 border-t border-border-light">
           <div className="flex items-center gap-3">
-            <Button variant="link" size="xs" className="group/link">
-              View Details
-              <ArrowRightIcon size={13} className="transition-transform duration-150 group-hover/link:translate-x-0.5" />
+            <Button
+              variant="link"
+              size="xs"
+              className="group/link"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDetails((prev) => !prev);
+                setShowAddMember(false);
+                setShowAddExpense(false);
+                setSelectedUsers([]);
+                setAddError('');
+              }}
+            >
+              {showDetails ? 'Hide Details' : 'View Details'}
+              <ArrowRightIcon size={13} className={`transition-transform duration-150 ${showDetails ? 'rotate-90' : 'group-hover/link:translate-x-0.5'}`} />
             </Button>
             <Button
               variant="ghost"
               size="xs"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowAddMember((prev) => !prev);
+                setShowAddExpense((prev) => !prev);
+                setShowAddMember(false);
                 setSelectedUsers([]);
                 setAddError('');
               }}
-              title="Add members"
+              title="Add expense"
             >
-              <UserPlusIcon size={13} />
-              Add
+              <ReceiptIcon size={13} />
+              Expense
             </Button>
           </div>
           {onDelete && (
