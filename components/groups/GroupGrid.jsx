@@ -154,7 +154,7 @@ export default function GroupGrid() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {groups.map((group, index) => (
             <div key={group.Id}>
-              <GroupCard group={group} index={index} onDelete={handleDelete} />
+              <GroupCard group={group} onDelete={handleDelete} />
             </div>
           ))}
         </div>

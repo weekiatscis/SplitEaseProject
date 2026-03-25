@@ -10,12 +10,16 @@ export interface ExpenseSplitResult {
   AmountOwed: number;
 }
 
-export interface GroupBalanceSummary {
-  GroupId: number;
-  Balances: { UserId: number; NetAmount: number }[];
+export interface GroupExpenseItem {
+  ExpenseId: number;
+  Description: string;
+  TotalAmount: number;
+  PaidBy: string;
+  Date: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_EXPENSE_API_BASE_URL;
+// Proxied through Next.js rewrites to avoid CORS issues
+const API_BASE_URL = '/api/expense';
 
 export async function createExpense(
   groupId: number,
@@ -37,8 +41,8 @@ export async function createExpense(
   return res.json();
 }
 
-export async function getGroupSummary(groupId: number): Promise<GroupBalanceSummary> {
-  const res = await fetch(`${API_BASE_URL}/groups/${groupId}/summary`);
+export async function getGroupSummary(groupId: number): Promise<GroupExpenseItem[]> {
+  const res = await fetch(`${API_BASE_URL}/GetGroupSummary?GroupId=${groupId}`);
   if (!res.ok) throw new Error(`GetGroupSummary failed with status ${res.status}`);
   return res.json();
 }
