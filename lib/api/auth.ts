@@ -8,18 +8,24 @@ export interface LoginResponse {
   UserID: number;
   Name: string;
   Email: string;
+  CountryCode?: string;
+  PhoneNumber?: string;
 }
 
 export interface CreateUserRequest {
   Name: string;
   Email: string;
   Password: string;
+  CountryCode: string;
+  PhoneNumber: string;
 }
 
 export interface UserListItem {
   UserId: number;
   Name: string;
   Email: string;
+  CountryCode?: string;
+  PhoneNumber?: string;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -44,11 +50,23 @@ export async function getAllUsers(userId: number): Promise<UserListItem[]> {
   return res.json();
 }
 
-export async function createUser(name: string, email: string, password: string): Promise<number> {
+export async function createUser(
+  name: string,
+  email: string,
+  password: string,
+  countryCode: string,
+  phoneNumber: string
+): Promise<number> {
   const res = await fetch(`${API_BASE_URL}/users/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ Name: name, Email: email, Password: password } satisfies CreateUserRequest),
+    body: JSON.stringify({
+      Name: name,
+      Email: email,
+      Password: password,
+      CountryCode: countryCode,
+      PhoneNumber: phoneNumber,
+    } satisfies CreateUserRequest),
   });
 
   if (!res.ok) {

@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeftIcon,
   UserPlusIcon,
   ReceiptIcon,
+  CreditCardIcon,
   TrashIcon,
   SpinnerGapIcon,
-  XIcon,
   CheckIcon,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import AddExpensePanel from './AddExpensePanel';
+import PayExpensePanel from './PayExpensePanel';
 import { useGroups } from '@/context/GroupContext';
 import { useAuth } from '@/context/AuthContext';
 import { getAllUsers } from '@/lib/api/auth';
@@ -41,6 +42,7 @@ export default function GroupDetailView({ groupId }) {
   const [summaryVersion, setSummaryVersion] = useState(0);
 
   const [showAddExpense, setShowAddExpense] = useState(false);
+  const [showPayExpense, setShowPayExpense] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
 
   const [allUsers, setAllUsers] = useState([]);
@@ -192,6 +194,7 @@ export default function GroupDetailView({ groupId }) {
             onClick={() => {
               setShowAddMember((prev) => !prev);
               setShowAddExpense(false);
+              setShowPayExpense(false);
               setSelectedUsers([]);
               setAddMemberError('');
             }}
@@ -294,17 +297,33 @@ export default function GroupDetailView({ groupId }) {
           <h3 className="text-sm font-semibold text-text-heading">
             Expenses
           </h3>
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => {
-              setShowAddExpense((prev) => !prev);
-              setShowAddMember(false);
-            }}
-          >
-            <ReceiptIcon size={12} />
-            Add Expense
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => {
+                setShowPayExpense((prev) => !prev);
+                setShowAddExpense(false);
+                setShowAddMember(false);
+              }}
+              disabled={!expenses || expenses.length === 0}
+            >
+              <CreditCardIcon size={12} />
+              Pay Expense
+            </Button>
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => {
+                setShowAddExpense((prev) => !prev);
+                setShowPayExpense(false);
+                setShowAddMember(false);
+              }}
+            >
+              <ReceiptIcon size={12} />
+              Add Expense
+            </Button>
+          </div>
         </div>
 
         {/* Add expense panel */}
@@ -320,6 +339,24 @@ export default function GroupDetailView({ groupId }) {
                 allUsers={allUsers}
                 onClose={() => setShowAddExpense(false)}
                 onExpenseAdded={() => setSummaryVersion((v) => v + 1)}
+              />
+            )}
+          </div>
+        )}
+
+        {showPayExpense && expenses && expenses.length > 0 && (
+          <div className="mb-4">
+            {loadingUsers ? (
+              <div className="bg-bg-primary rounded-lg p-3 border border-border-light flex items-center justify-center py-6">
+                <SpinnerGapIcon size={16} className="animate-spin text-text-muted" />
+              </div>
+            ) : (
+              <PayExpensePanel
+                group={group}
+                expenses={expenses}
+                allUsers={allUsers}
+                onClose={() => setShowPayExpense(false)}
+                onPaid={() => setSummaryVersion((v) => v + 1)}
               />
             )}
           </div>
@@ -406,6 +443,23 @@ export default function GroupDetailView({ groupId }) {
                 </tfoot>
               )}
             </table>
+          </div>
+        )}
+
+        {!loadingExpenses && expenses && expenses.length > 0 && !showPayExpense && (
+          <div className="mt-4 pt-4 border-t border-border-light flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowPayExpense(true);
+                setShowAddExpense(false);
+                setShowAddMember(false);
+              }}
+            >
+              <CreditCardIcon size={14} />
+              Pay an expense
+            </Button>
           </div>
         )}
       </section>

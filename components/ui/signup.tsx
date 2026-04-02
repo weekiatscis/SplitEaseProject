@@ -11,6 +11,8 @@ import { createUser } from '@/lib/api/auth'
 const SignUpPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [countryCode, setCountryCode] = useState('+65');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -39,8 +41,18 @@ const SignUpPage = () => {
     e.preventDefault();
     setError('');
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !countryCode || !phoneNumber || !password || !confirmPassword) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    if (!/^\+?\d{1,4}$/.test(countryCode.trim())) {
+      setError('Please enter a valid country code');
+      return;
+    }
+
+    if (!/^\d{6,15}$/.test(phoneNumber.trim())) {
+      setError('Please enter a valid phone number');
       return;
     }
 
@@ -51,7 +63,13 @@ const SignUpPage = () => {
 
     setIsLoading(true);
     try {
-      await createUser(name, email, password);
+      await createUser(
+        name.trim(),
+        email.trim(),
+        password,
+        countryCode.trim(),
+        phoneNumber.trim()
+      );
       router.push('/');
     } catch (err) {
       if (err instanceof Error) {
@@ -143,6 +161,20 @@ const SignUpPage = () => {
                   value={email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 />
+                <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
+                  <AppInput
+                    placeholder="Code"
+                    type="text"
+                    value={countryCode}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCountryCode(e.target.value)}
+                  />
+                  <AppInput
+                    placeholder="Phone Number"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(e.target.value)}
+                  />
+                </div>
                 <AppInput
                   placeholder="Password"
                   type="password"
@@ -162,7 +194,7 @@ const SignUpPage = () => {
               <div className='flex gap-4 justify-center items-center'>
                  <button
                   type="submit"
-                  disabled={!name || !email || !password || !confirmPassword || isLoading}
+                  disabled={!name || !email || !countryCode || !phoneNumber || !password || !confirmPassword || isLoading}
                   className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-md bg-primary px-4 py-1.5 text-xs font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-primary/30 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                 >
                 <span className="text-sm px-2 py-1">{isLoading ? 'Creating account...' : 'Sign Up'}</span>
