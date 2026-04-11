@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
-import { CheckIcon, XIcon } from '@phosphor-icons/react';
+import { CheckIcon, XIcon } from '@/components/ui/icons';
 
 export default function ExpenseRowExpanded({ expense }) {
   return (

@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { loginUser } from '@/lib/api/auth';
 
 interface User {
   UserID: number;
@@ -46,7 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    const data = await loginUser(email, password);
+    const res = await fetch(`/api/users/Login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Email: email, Password: password }),
+    });
+    if (!res.ok) throw new Error(`Login failed with status ${res.status}`);
+    const data = await res.json();
 
     if (!data.IsSuccess) {
       throw new Error('Invalid email or password');

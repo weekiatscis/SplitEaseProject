@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MagnifyingGlassIcon, SlidersHorizontalIcon, CalendarBlankIcon, ArrowsDownUpIcon } from '@phosphor-icons/react';
+import { MagnifyingGlassIcon, SlidersHorizontalIcon, CalendarBlankIcon, ArrowsDownUpIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import AppInput from '@/components/ui/AppInput';
 import { expenses as initialExpenses } from '@/lib/data/expenses';

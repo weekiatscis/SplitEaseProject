@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { UsersThreeIcon, TrashIcon } from '@phosphor-icons/react';
+import { UsersThreeIcon, TrashIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 
 function getInitials(name) {

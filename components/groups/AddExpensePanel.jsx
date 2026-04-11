@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from 'react';
-import { SpinnerGapIcon, CheckCircleIcon, XIcon } from '@phosphor-icons/react';
+import { SpinnerGapIcon, CheckCircleIcon, XIcon, CheckIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import AppInput from '@/components/ui/AppInput';
-import { createExpense } from '@/lib/api/expenses';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
+
+function getInitials(name) {
+  return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+}
 
 export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdded }) {
   const { user: currentUser } = useAuth();
@@ -19,7 +22,6 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
 
   const members = group.GroupMembers || [];
 
-  // getAllUsers may exclude the current user, so ensure they're included
   const allUsersWithSelf = currentUser
     ? [
         { UserId: currentUser.UserID, Name: currentUser.Name, Email: currentUser.Email },
@@ -27,38 +29,53 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
       ]
     : allUsers;
 
-  // Map group member names to user objects for the dropdown
   const memberUsers = allUsersWithSelf.filter((u) =>
     members.some((m) => m.toLowerCase() === u.Name.toLowerCase())
   );
+
+  // Default: all members are selected for the split
+  const [sharedBy, setSharedBy] = useState(() => memberUsers.map((u) => u.UserId));
+
+  const toggleMember = (userId) => {
+    setSharedBy((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
 
   const resolveUserName = (userId) => {
     const found = allUsersWithSelf.find((u) => u.UserId === userId);
     return found ? found.Name : `User ${userId}`;
   };
 
+  const parsedAmount = parseFloat(amount);
+  const perPersonShare =
+    sharedBy.length > 0 && !isNaN(parsedAmount) && parsedAmount > 0
+      ? parsedAmount / sharedBy.length
+      : null;
+
   const handleSubmit = async () => {
     setError('');
 
-    if (!description.trim()) {
-      setError('Please enter a description');
-      return;
-    }
-
-    const parsedAmount = parseFloat(amount);
-    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      setError('Please enter a valid amount');
-      return;
-    }
-
-    if (!paidBy) {
-      setError('Please select who paid');
-      return;
-    }
+    if (!description.trim()) { setError('Please enter a description'); return; }
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) { setError('Please enter a valid amount'); return; }
+    if (!paidBy) { setError('Please select who paid'); return; }
+    if (sharedBy.length === 0) { setError('Select at least one person to split with'); return; }
 
     setIsSubmitting(true);
     try {
-      const result = await createExpense(group.Id, parsedAmount, description.trim(), Number(paidBy));
+      const res = await fetch('/api/even-split/expenses/CreateExpenseEvenSplit3', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          GroupId: group.Id,
+          AmountOwed: parsedAmount,
+          Description: description.trim(),
+          PaidBy: Number(paidBy),
+          SharedBy: sharedBy,
+        }),
+      });
+      if (!res.ok) throw new Error(`CreateExpense failed with status ${res.status}`);
+      const result = await res.json();
       setSplitResult(result);
       onExpenseAdded?.();
     } catch (err) {
@@ -68,7 +85,6 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
     }
   };
 
-  // Show split result after successful creation
   if (splitResult) {
     return (
       <div className="bg-bg-primary rounded-lg p-3 border border-border-light">
@@ -83,19 +99,29 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
         </div>
 
         <p className="text-xs text-text-secondary mb-2">
-          <span className="font-medium text-text-heading">{description}</span> — {formatCurrency(parseFloat(amount))}
+          <span className="font-medium text-text-heading">{description}</span> — {formatCurrency(parsedAmount)}
         </p>
 
         <div className="flex flex-col gap-1">
-          {splitResult.map((split) => (
-            <div
-              key={split.UserId}
-              className="flex items-center justify-between px-2 py-1.5 rounded-md bg-bg-card text-xs"
-            >
-              <span className="text-text-body">{resolveUserName(split.UserId)}</span>
-              <span className="font-medium text-text-heading">{formatCurrency(split.AmountOwed)}</span>
-            </div>
-          ))}
+          {splitResult.map((split) => {
+            const owes = split.AmountOwed < 0;
+            return (
+              <div
+                key={split.UserId}
+                className="flex items-center justify-between px-2 py-1.5 rounded-md bg-bg-card text-xs"
+              >
+                <span className="text-text-body">{resolveUserName(split.UserId)}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className={owes ? 'text-danger' : 'text-success'}>
+                    {owes ? 'owes' : 'gets back'}
+                  </span>
+                  <span className={`font-medium ${owes ? 'text-danger' : 'text-success'}`}>
+                    {formatCurrency(Math.abs(split.AmountOwed))}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -133,10 +159,7 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
         <select
           value={paidBy}
           onChange={(e) => setPaidBy(e.target.value)}
-          className="
-            w-full px-3 py-2 rounded-lg bg-bg-card border border-border text-xs text-text-body
-            outline-none focus:border-primary focus:ring-2 focus:ring-primary/15
-          "
+          className="w-full px-3 py-2 rounded-lg bg-bg-card border border-border text-xs text-text-body outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
         >
           <option value="">Who paid?</option>
           {memberUsers.map((u) => (
@@ -145,23 +168,59 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
             </option>
           ))}
         </select>
+
+        {/* Split among */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-[11px] font-medium text-text-muted uppercase tracking-wide">
+              Split among
+            </p>
+            {perPersonShare !== null && (
+              <span className="text-[11px] text-text-muted">
+                {formatCurrency(perPersonShare)} / person
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1 max-h-[160px] overflow-y-auto">
+            {memberUsers.map((u) => {
+              const selected = sharedBy.includes(u.UserId);
+              return (
+                <button
+                  key={u.UserId}
+                  type="button"
+                  onClick={() => toggleMember(u.UserId)}
+                  className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md text-left text-xs transition-colors duration-150
+                    ${selected
+                      ? 'bg-primary/10 border border-primary/25 text-primary'
+                      : 'bg-bg-card border border-transparent text-text-body hover:bg-bg-primary'
+                    }`}
+                >
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold flex-shrink-0
+                    ${selected ? 'bg-primary text-white' : 'bg-primary/15 text-text-heading'}`}>
+                    {selected ? <CheckIcon size={10} /> : getInitials(u.Name)}
+                  </div>
+                  <span className="font-medium">{u.Name}</span>
+                  {u.UserId === currentUser?.UserID && (
+                    <span className="text-[10px] text-text-muted ml-auto">You</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {error && (
-        <p className="text-[11px] text-danger mt-2">{error}</p>
-      )}
+      {error && <p className="text-[11px] text-danger mt-2">{error}</p>}
 
       <Button
         onClick={handleSubmit}
-        disabled={isSubmitting}
+        disabled={isSubmitting || sharedBy.length === 0}
         size="sm"
         className="w-full mt-2.5"
       >
         {isSubmitting ? (
-          <>
-            <SpinnerGapIcon size={12} className="animate-spin" />
-            Adding...
-          </>
+          <><SpinnerGapIcon size={12} className="animate-spin" />Adding...</>
         ) : (
           'Add Expense'
         )}

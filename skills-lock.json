@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "colorize": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "computedHash": "4793ac377b2bc1a5831d9634ce882373350cc5d097fd631d192155266204ceb8"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "computedHash": "a26b3dd377c4572b1c34c68f82ab9a1cb806f21c7157060327fe60e9b6d2e277"
+    },
+    "layout": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "computedHash": "6b5fd49587616ca1e594e9c6b11bc1cef5eb0b2d137c307de54a8a650770f4ce"
+    },
+    "polish": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "computedHash": "c294f2570dcc5b8865d17f0dc5ef339a700c868f1b20fa9994297f64ace2d4de"
+    },
+    "shape": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "computedHash": "8edad33758f2461f51afdb51741bfcc4cc57d84ea42e2751a84be2c6a2d48f69"
+    }
+  }
+}

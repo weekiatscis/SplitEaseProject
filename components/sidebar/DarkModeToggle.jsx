@@ -1,6 +1,6 @@
 "use client";
 
-import { SunIcon, MoonIcon } from '@phosphor-icons/react';
+import { SunIcon, MoonIcon } from '@/components/ui/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 

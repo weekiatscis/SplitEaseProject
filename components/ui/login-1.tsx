@@ -13,26 +13,8 @@ const Page = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const leftSection = e.currentTarget.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - leftSection.left,
-      y: e.clientY - leftSection.top
-    });
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovering(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,121 +40,76 @@ const Page = () => {
     }
   };
 
-   const socialIcons = [
-    {
-      icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4zm9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8A1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5a5 5 0 0 1-5 5a5 5 0 0 1-5-5a5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3a3 3 0 0 0 3 3a3 3 0 0 0 3-3a3 3 0 0 0-3-3"/></svg>,
-      href: '#',
-      gradient: 'bg-[var(--color-bg)]',
-    },
-    {
-      icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6.94 5a2 2 0 1 1-4-.002a2 2 0 0 1 4 .002M7 8.48H3V21h4zm6.32 0H9.34V21h3.94v-6.57c0-3.66 4.77-4 4.77 0V21H22v-7.93c0-6.17-7.06-5.94-8.72-2.91z"/></svg>,
-      href: '#',
-      bg: 'bg-[var(--color-bg)]',
-    },
-    {
-      icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396z"/></svg>,
-      href: '#',
-      bg: 'bg-[var(--color-bg)]',
-    }
-  ];
-
   return (
-    <div className="h-screen w-[100%] bg-[var(--color-bg)] flex items-center justify-center p-4">
-    <div className='card w-[80%] lg:w-[70%] md:w-[55%] flex justify-between gap-12 h-[600px]'>
-      <div
-        className='w-full lg:w-1/2 px-4 lg:px-16 left h-full relative overflow-hidden'
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}>
-          <div
-            className={`absolute pointer-events-none w-[500px] h-[500px] bg-gradient-to-r from-primary/20 via-gradient-purple-start/20 to-gradient-coral-end/20 rounded-full blur-3xl transition-opacity duration-200 ${
-              isHovering ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{
-              transform: `translate(${mousePosition.x - 250}px, ${mousePosition.y - 250}px)`,
-              transition: 'transform 0.1s ease-out'
-            }}
-          />
-          <div className="form-container sign-in-container h-full z-10">
-            <form className='text-center py-10 md:py-20 grid gap-2 h-full' onSubmit={handleSubmit}>
-              <div className='grid gap-4 md:gap-6 mb-2'>
-                <h1 className='text-3xl md:text-4xl font-extrabold'>Sign in</h1>
-                <div className="social-container">
-                  <div className="flex items-center justify-center">
-                    <ul className="flex gap-3 md:gap-4">
-                      {socialIcons.map((social, index) => {
-                        return (
-                          <li key={index} className="list-none">
-                            <a
-                              href={social.href}
-                              className={`w-[2.5rem] md:w-[3rem] h-[2.5rem] md:h-[3rem] bg-[var(--color-bg-2)] rounded-full flex justify-center items-center relative z-[1] border-3 border-[var(--color-text-primary)] overflow-hidden group`}
-                            >
-                              <div
-                                className={`absolute inset-0 w-full h-full ${
-                                  social.gradient || social.bg
-                                } scale-y-0 origin-bottom transition-transform duration-500 ease-in-out group-hover:scale-y-100`}
-                              />
-                              <span className="text-[1.5rem] text-text-heading transition-all duration-500 ease-in-out z-[2] group-hover:text-[var(--color-text-primary)] group-hover:rotate-y-360">
-                                {social.icon}
-                              </span>
-                            </a>
-                          </li>
-                        );
-                      })}
-                  </ul>
-                </div>
-              </div>
-              <span className='text-sm'>or use your account</span>
-            </div>
-            <div className='grid gap-4 items-center'>
-                <AppInput
-                  placeholder="Email"
-                  type="email"
-                  value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                />
-                <AppInput
-                  placeholder="Password"
-                  type="password"
-                  value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && (
-                <p className="text-danger text-sm animate-shake">{error}</p>
-              )}
-              <a href="#" className='font-light text-sm md:text-md'>Forgot your password?</a>
-              <div className='flex gap-4 justify-center items-center'>
-                 <button
-                  type="submit"
-                  disabled={!email || !password || isLoading}
-                  className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-md bg-primary px-4 py-1.5 text-xs font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-primary/30 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
-                >
-                <span className="text-sm px-2 py-1">{isLoading ? 'Signing in...' : 'Sign In'}</span>
-                <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:animate-shine">
-                  <div className="relative h-full w-8 bg-white/20" />
-                </div>
-              </button>
-              </div>
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                Don&apos;t have an account?{' '}
-                <Link href="/signup" className="font-semibold text-[var(--color-text-primary)] hover:underline">
-                  Sign Up
-                </Link>
-              </p>
-            </form>
+    <div className="min-h-screen w-full bg-[var(--login-bg)] flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl flex rounded-2xl border border-[var(--login-border)] bg-[var(--login-surface)] shadow-sm overflow-hidden" style={{ minHeight: 560 }}>
+
+        {/* Left — form */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 md:px-12 py-12">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[var(--login-heading)] tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+              Welcome back
+            </h1>
+            <p className="mt-1.5 text-sm text-[var(--login-text-secondary)]">Sign in to your SplitEase account</p>
           </div>
-        </div>
-        <div className='hidden lg:block w-1/2 right h-full overflow-hidden'>
-            <Image
-              src='/SplitEase.png'
-              width={1000}
-              height={1000}
-              priority
-              alt="Login decorative image"
-              className="w-full h-full object-contain transition-transform duration-300 opacity-90"
+
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <AppInput
+              placeholder="Email"
+              type="email"
+              value={email}
+              variant="simple"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             />
-       </div>
+            <AppInput
+              placeholder="Password"
+              type="password"
+              value={password}
+              variant="simple"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            />
+
+            {error && (
+              <p className="text-danger text-sm -mt-1">{error}</p>
+            )}
+
+            <div className="flex items-center justify-between mt-1">
+              <a href="#" className="text-xs text-[var(--login-text-secondary)] hover:text-[var(--login-text-primary)] transition-colors duration-150">
+                Forgot password?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              disabled={!email || !password || isLoading}
+              className="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-medium
+                hover:bg-primary-hover transition-colors duration-150
+                disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {isLoading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          <p className="mt-6 text-sm text-[var(--login-text-secondary)]">
+            Don&apos;t have an account?{' '}
+            <Link href="/signup" className="font-semibold text-[var(--login-text-primary)] hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </div>
+
+        {/* Right — decorative image */}
+        <div className="hidden lg:flex w-1/2 items-center justify-center bg-[var(--login-muted-surface)] p-8">
+          <Image
+            src="/SplitEase.png"
+            width={480}
+            height={480}
+            priority
+            alt="SplitEase illustration"
+            className="w-full max-w-sm h-auto object-contain"
+          />
+        </div>
+
       </div>
     </div>
   )

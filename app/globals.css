@@ -5,9 +5,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Epilogue", ui-sans-serif, system-ui, sans-serif;
 
-  --color-bg-primary: #F0F0F5;
+  --color-bg-primary: #EEF0F8;
   --color-bg-card: #FFFFFF;
   --color-bg-sidebar: #FFFFFF;
   --color-primary: #4A6CF7;
@@ -97,24 +98,7 @@
   --color-text-primary-rgb: 199, 209, 219;
 }
 
-/* Smooth dark mode transitions */
-*,
-*::before,
-*::after {
-  transition-property: background-color, color, border-color, box-shadow, fill, stroke, transform;
-  transition-duration: 150ms;
-  transition-timing-function: ease;
-}
-
-/* Exclude elements that should not have transitions */
-svg *,
-canvas,
-img,
-video {
-  transition-property: none;
-}
-
-/* Re-enable for specific SVG elements we want animated */
+/* Recharts micro-transitions */
 .recharts-sector,
 .recharts-dot,
 .recharts-line path {
@@ -191,6 +175,11 @@ video {
 :root {
   --login-bg: #F8F9FB;
   --login-surface: #FFFFFF;
+  /* Aliases used by login/signup components and AppInput default variant */
+  --color-bg: #F8F9FB;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #1E293B;
+  --color-bg-2: #E2E8F0;
   --login-muted-surface: #F1F3F5;
   --login-border: #D1D5DB;
   --login-text-primary: #1E293B;

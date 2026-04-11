@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
-import { WalletIcon } from '@phosphor-icons/react';
+import { WalletIcon } from '@/components/ui/icons';
 import { navigationItems } from '@/lib/data/navigation';
 import NavItem from '@/components/sidebar/NavItem';
 

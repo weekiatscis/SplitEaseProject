@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { SpinnerGapIcon } from '@phosphor-icons/react';
-import { getGroupSummary } from '@/lib/api/expenses';
+import { SpinnerGapIcon } from '@/components/ui/icons';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
+import { useAuth } from '@/context/AuthContext';
 
 function getInitials(name) {
   return name
@@ -16,24 +16,27 @@ function getInitials(name) {
 }
 
 export default function DashboardGroupCard({ group }) {
-  const [totalExpense, setTotalExpense] = useState(null);
+  const { user } = useAuth();
+  const [amountOwed, setAmountOwed] = useState(null);
   const [loading, setLoading] = useState(true);
   const members = group.GroupMembers || [];
 
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     setLoading(true);
-    getGroupSummary(group.Id)
+    fetch(`/api/expense/GetExpensesSplitSummary?GroupId=${group.Id}`)
+      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
       .then((data) => {
         if (!cancelled) {
-          const total = (data || []).reduce((sum, e) => sum + e.TotalAmount, 0);
-          setTotalExpense(total);
+          const entry = (data || []).find((d) => d.UserId === user.UserID);
+          setAmountOwed(entry ? entry.AmountOwedSum : 0);
         }
       })
-      .catch(() => { if (!cancelled) setTotalExpense(0); })
+      .catch(() => { if (!cancelled) setAmountOwed(0); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [group.Id]);
+  }, [group.Id, user]);
 
   return (
     <div className="bg-bg-card rounded-xl border border-border p-5 flex flex-col justify-between">
@@ -66,16 +69,16 @@ export default function DashboardGroupCard({ group }) {
         )}
       </div>
 
-      {/* Total expense */}
+      {/* Amount owed */}
       <div className="mb-4">
         <p className="text-[11px] text-text-muted uppercase tracking-wide mb-0.5">
-          total expense
+          you owe
         </p>
         {loading ? (
           <SpinnerGapIcon size={18} className="animate-spin text-text-muted mt-1" />
         ) : (
           <p className="text-2xl font-bold text-text-heading tracking-tight">
-            {formatCurrency(totalExpense)}
+            {formatCurrency(amountOwed)}
           </p>
         )}
       </div>
@@ -83,10 +86,9 @@ export default function DashboardGroupCard({ group }) {
       {/* View link */}
       <Link
         href={`/groups/${group.Id}`}
-        className="text-xs font-semibold text-text-secondary uppercase tracking-wider
-          hover:text-text-heading transition-colors duration-150"
+        className="text-xs font-medium text-primary hover:text-primary-hover transition-colors duration-150"
       >
-        View Group Expense
+        View expenses →
       </Link>
     </div>
   );

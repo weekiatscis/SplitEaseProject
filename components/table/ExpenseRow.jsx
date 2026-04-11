@@ -1,4 +1,4 @@
-import { CaretDownIcon, CaretUpIcon } from '@phosphor-icons/react';
+import { CaretDownIcon, CaretUpIcon } from '@/components/ui/icons';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import StatusBadge from './StatusBadge';
 

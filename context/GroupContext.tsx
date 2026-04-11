@@ -1,15 +1,52 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import {
-  getGroupsByUser,
-  getGroupMember,
-  createGroup as apiCreateGroup,
-  deleteGroup as apiDeleteGroup,
-  addMember as apiAddMember,
-  type GroupMemberResponse,
-} from '@/lib/api/groups';
 import { useAuth } from '@/context/AuthContext';
+
+const GROUP_API = '/api/groups';
+
+export interface GroupMemberResponse {
+  Id: number;
+  GroupName: string;
+  CreatedBy: string;
+  GroupMembers: string[];
+}
+
+async function getGroupsByUser(userId: number) {
+  const res = await fetch(`${GROUP_API}/GetGroupsByUser?UserId=${userId}`);
+  if (!res.ok) throw new Error(`GetGroupsByUser failed with status ${res.status}`);
+  return res.json();
+}
+
+async function getGroupMember(groupId: number): Promise<GroupMemberResponse> {
+  const res = await fetch(`${GROUP_API}/GetGroupMember?GroupId=${groupId}`);
+  if (!res.ok) throw new Error(`GetGroupMember failed with status ${res.status}`);
+  return res.json();
+}
+
+async function apiCreateGroup(name: string, createdBy: number): Promise<number> {
+  const res = await fetch(`${GROUP_API}/groups/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ GroupName: name, CreatedBy: createdBy }),
+  });
+  if (!res.ok) throw new Error(`CreateGroup failed with status ${res.status}`);
+  return res.json();
+}
+
+async function apiDeleteGroup(groupId: number): Promise<void> {
+  const res = await fetch(`${GROUP_API}/DeleteGroup?GroupId=${groupId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(`DeleteGroup failed with status ${res.status}`);
+}
+
+async function apiAddMember(groupId: number, userIdList: number[]): Promise<void> {
+  const res = await fetch(`${GROUP_API}/groups/addMember`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ GroupId: groupId, UserIdList: userIdList }),
+  });
+  if (!res.ok) throw new Error(`AddMember failed with status ${res.status}`);
+}
 
 interface GroupContextType {
   groups: GroupMemberResponse[];
@@ -44,7 +81,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       const groupList = await getGroupsByUser(user.UserID);
 
       // Deduplicate by GroupId in case the API returns duplicates
-      const uniqueGroupIds = [...new Set(groupList.map((g) => g.GroupId))];
+      const uniqueGroupIds = [...new Set(groupList.map((g: { GroupId: number }) => g.GroupId))];
 
       if (uniqueGroupIds.length === 0) {
         setGroups([]);
@@ -54,7 +91,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
 
       // Fetch full group details (with members) for each group
       const results = await Promise.allSettled(
-        uniqueGroupIds.map((id) => getGroupMember(id))
+        uniqueGroupIds.map((id) => getGroupMember(id as number))
       );
 
       const fetchedGroups: GroupMemberResponse[] = [];

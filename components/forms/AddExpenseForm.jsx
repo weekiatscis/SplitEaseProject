@@ -2,7 +2,7 @@
 
 import { useReducer } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { SpinnerGapIcon, CheckIcon } from '@phosphor-icons/react';
+import { SpinnerGapIcon, CheckIcon } from '@/components/ui/icons';
 import AppInput from '@/components/ui/AppInput';
 
 const initialState = {

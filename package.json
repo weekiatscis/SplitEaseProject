@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
+    "@duo-icons/react": "^1.0.1",
     "@phosphor-icons/react": "^2.1.10",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",

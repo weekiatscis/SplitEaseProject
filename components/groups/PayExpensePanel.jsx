@@ -6,10 +6,9 @@ import {
   CreditCardIcon,
   SpinnerGapIcon,
   XIcon,
-} from '@phosphor-icons/react';
+} from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import AppInput from '@/components/ui/AppInput';
-import { payExpense } from '@/lib/api/expenses';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
@@ -70,13 +69,18 @@ export default function PayExpensePanel({ group, expenses, allUsers, onClose, on
 
     setIsSubmitting(true);
     try {
-      await payExpense({
-        GroupId: group.Id,
-        ExpenseId: selectedExpense.ExpenseId,
-        UserId: Number(userId),
-        Amount: parsedAmount,
-        Note: note.trim() || undefined,
+      const res = await fetch('/api/pay-expense', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          GroupId: group.Id,
+          ExpenseId: selectedExpense.ExpenseId,
+          UserId: Number(userId),
+          Amount: parsedAmount,
+          Note: note.trim() || undefined,
+        }),
       });
+      if (!res.ok) throw new Error(`PayExpense failed with status ${res.status}`);
       setDidSucceed(true);
       onPaid?.();
     } catch (err) {

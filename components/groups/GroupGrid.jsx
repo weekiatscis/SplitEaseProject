@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { SpinnerGapIcon, UsersThreeIcon, PlusIcon, XIcon } from '@phosphor-icons/react';
+import { SpinnerGapIcon, UsersThreeIcon, PlusIcon, XIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import AppInput from '@/components/ui/AppInput';
 import { useGroups } from '@/context/GroupContext';

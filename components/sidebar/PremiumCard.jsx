@@ -1,4 +1,4 @@
-import { SparkleIcon } from '@phosphor-icons/react';
+import { SparkleIcon } from '@/components/ui/icons';
 
 export default function PremiumCard() {
   return (

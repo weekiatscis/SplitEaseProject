@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { TrendUpIcon, ShareNetworkIcon } from '@phosphor-icons/react';
+import { TrendUpIcon, ShareNetworkIcon } from '@/components/ui/icons';
 import { spendingTrendsData } from '@/lib/data/chartData';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 

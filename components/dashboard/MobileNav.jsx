@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { XIcon, WalletIcon } from '@phosphor-icons/react';
+import { XIcon, WalletIcon } from '@/components/ui/icons';
 import { usePathname } from 'next/navigation';
 import { navigationItems } from '@/lib/data/navigation';
 import NavItem from '@/components/sidebar/NavItem';

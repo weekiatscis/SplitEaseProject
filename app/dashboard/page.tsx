@@ -1,6 +1,6 @@
 'use client';
 
-import { SpinnerGapIcon } from '@phosphor-icons/react';
+import { SpinnerGapIcon } from '@/components/ui/icons';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardGroupCard from '@/components/cards/DashboardGroupCard';
 import TransactionsTable from '@/components/table/TransactionsTable';

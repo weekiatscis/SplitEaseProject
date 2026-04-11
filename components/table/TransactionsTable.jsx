@@ -1,6 +1,6 @@
 "use client";
 
-import { DotsThreeVerticalIcon } from '@phosphor-icons/react';
+import { DotsThreeIcon as DotsThreeVerticalIcon } from '@/components/ui/icons';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { expenses } from '@/lib/data/expenses';
 
@@ -20,16 +20,16 @@ export default function TransactionsTable() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border-light">
-              <th className="text-left text-xs font-medium text-primary py-3 px-5">
+              <th className="text-left text-xs font-medium text-text-muted uppercase tracking-wide py-3 px-5">
                 Description
               </th>
-              <th className="text-left text-xs font-medium text-primary py-3 px-4">
+              <th className="text-left text-xs font-medium text-text-muted uppercase tracking-wide py-3 px-4">
                 Method
               </th>
-              <th className="text-left text-xs font-medium text-primary py-3 px-4">
+              <th className="text-left text-xs font-medium text-text-muted uppercase tracking-wide py-3 px-4">
                 Date
               </th>
-              <th className="text-left text-xs font-medium text-primary py-3 px-4">
+              <th className="text-left text-xs font-medium text-text-muted uppercase tracking-wide py-3 px-4">
                 Amount
               </th>
               <th className="w-10" />

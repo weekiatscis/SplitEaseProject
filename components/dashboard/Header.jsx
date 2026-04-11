@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { MagnifyingGlassIcon, BellSimpleIcon, GearSixIcon, ListIcon, SignOutIcon } from '@phosphor-icons/react';
+import { MagnifyingGlassIcon, BellSimpleIcon, GearSixIcon, ListIcon, SignOutIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
-import DarkModeToggle from '@/components/sidebar/DarkModeToggle';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Header({ onMenuToggle, title = 'Expenses', subtitle = "Here's your overview this month." }) {
@@ -52,9 +51,6 @@ export default function Header({ onMenuToggle, title = 'Expenses', subtitle = "H
             "
           />
         </div>
-
-        {/* Dark mode toggle */}
-        <DarkModeToggle />
 
         {/* Notifications */}
         <Button
