@@ -33,6 +33,84 @@ function getInitials(name) {
     .slice(0, 2);
 }
 
+function pickErrorText(payload) {
+  if (!payload) return '';
+  if (typeof payload === 'string') return payload;
+  if (typeof payload !== 'object') return '';
+
+  const candidates = [
+    payload.error,
+    payload.message,
+    payload.Message,
+    payload.Error,
+    payload.ErrorMessage,
+    payload.description,
+    payload.Description,
+    payload.detail,
+    payload.details,
+    payload.reason,
+  ];
+
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim()) return c.trim();
+  }
+
+  return '';
+}
+
+function mapPaymentErrorMessage(status, rawText) {
+  const text = String(rawText || '').toLowerCase();
+  if (
+    text.includes('insufficient') ||
+    text.includes('not enough') ||
+    text.includes('insufficent') ||
+    (text.includes('balance') && text.includes('low')) ||
+    text.includes('unable to debit') ||
+    text.includes('not sufficient')
+  ) {
+    return 'Payment failed: insufficient balance. Please top up and try again.';
+  }
+
+  if (text.includes('timeout') || text.includes('timed out')) {
+    return 'Payment request timed out. Please try again.';
+  }
+
+  if (status >= 500) {
+    return 'Payment service is temporarily unavailable. Please try again shortly.';
+  }
+
+  if (status === 401 || status === 403) {
+    return 'Payment authorization failed. Please sign in again and retry.';
+  }
+
+  if (rawText && String(rawText).trim()) {
+    return `Payment failed: ${String(rawText).trim()}`;
+  }
+
+  return `Payment failed (${status})`;
+}
+
+async function getPaymentErrorMessage(res) {
+  let payload;
+  try {
+    payload = await res.clone().json();
+  } catch {
+    payload = null;
+  }
+
+  const fromJson = pickErrorText(payload);
+  if (fromJson) return mapPaymentErrorMessage(res.status, fromJson);
+
+  let text = '';
+  try {
+    text = (await res.text()) || '';
+  } catch {
+    text = '';
+  }
+
+  return mapPaymentErrorMessage(res.status, text);
+}
+
 export default function GroupDetailView({ groupId }) {
   const router = useRouter();
   const { groups, addMemberToGroup, removeGroup } = useGroups();
@@ -80,15 +158,48 @@ export default function GroupDetailView({ groupId }) {
         .then((res) => res.ok ? res.json() : Promise.reject(res.status)),
       fetch(`/api/expense-summary/GetGroupExpenseSummary2?GroupId=${groupId}`)
         .then((res) => res.ok ? res.json() : Promise.reject(res.status)),
+      fetch(`/api/expense/GetExpensesSplit?GroupId=${groupId}`)
+        .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+        .catch(() => []),
     ])
-      .then(([summary, summary2]) => {
+      .then(([summary, summary2, splitRows]) => {
         if (cancelled) return;
         setExpenses(summary || []);
         const map = {};
         const sbMap = {};
+        const mySplitByExpenseId = new Map();
+
+        const sameUser = (value) => {
+          const asNum = Number(value);
+          if (!Number.isNaN(asNum) && asNum === Number(currentUser.UserID)) return true;
+          if (typeof value === 'string' && typeof currentUser.Name === 'string') {
+            return value.trim().toLowerCase() === currentUser.Name.trim().toLowerCase();
+          }
+          return false;
+        };
+
+        const getExpenseId = (row) => Number(row?.ExpenseId ?? row?.ExpenseID ?? row?.Id);
+
+        (splitRows || []).forEach((row) => {
+          const rowUserId = row?.UserId ?? row?.UserID ?? row?.Name;
+          if (!sameUser(rowUserId)) return;
+          const expenseId = getExpenseId(row);
+          if (Number.isNaN(expenseId)) return;
+          const amountOwed = Number(row?.AmountOwed || 0);
+          // UI uses positive as "you owe" and negative as "owed to you".
+          const current = mySplitByExpenseId.get(expenseId) || 0;
+          mySplitByExpenseId.set(expenseId, current + (-amountOwed));
+        });
+
         (summary2 || []).forEach((e) => {
           const sharedBy = e.SharedBy || [];
           sbMap[e.ExpenseId] = sharedBy;
+          const fromSplit = mySplitByExpenseId.get(Number(e.ExpenseId));
+          if (fromSplit !== undefined) {
+            map[e.ExpenseId] = fromSplit;
+            return;
+          }
+
           const inSharedBy = sharedBy.includes(currentUser.UserID);
           const isPayer =
             e.PaidBy === currentUser.Name ||
@@ -196,7 +307,10 @@ export default function GroupDetailView({ groupId }) {
           },
         }),
       });
-      if (!res.ok) throw new Error(`Payment failed (${res.status})`);
+      if (!res.ok) {
+        const message = await getPaymentErrorMessage(res);
+        throw new Error(message);
+      }
       setSummaryVersion((v) => v + 1);
     } catch (err) {
       setPayError(err instanceof Error ? err.message : 'Payment failed');

@@ -15,6 +15,9 @@ const nextConfig = {
       // Even split — Flask expense_service (port 5003)
       { source: '/api/even-split/:path*', destination: 'http://localhost:5003/:path*' },
 
+      // Uneven split — Flask expense_service (port 5003)
+      { source: '/api/uneven-split/:path*', destination: 'http://localhost:5003/:path*' },
+
       // Expense — Flask expense_service (port 5003)
       { source: '/api/expense/:path*', destination: 'http://localhost:5003/:path*' },
 

@@ -12,6 +12,8 @@ CORS(app)
 BASE_URL = os.getenv("NEXT_PUBLIC_EXPENSE_API_BASE_URL")
 EXPENSE_SUMMARY_URL = os.getenv("NEXT_PUBLIC_EXPENSE_SUMMARY_API_BASE_URL")
 EVEN_SPLIT_URL = os.getenv("NEXT_PUBLIC_EVEN_SPLIT_API_BASE_URL")
+UNEVEN_SPLIT_URL = os.getenv("NEXT_PUBLIC_UNEVEN_SPLIT_API_BASE_URL")
+EXPENSES_SPLIT_URL = os.getenv("NEXT_PUBLIC_EXPENSES_SPLIT_API_BASE_URL")
 
 
 def forward(base_url, path, method, params=None, json=None):
@@ -33,6 +35,16 @@ def create_expense_even_split3():
     return forward(EVEN_SPLIT_URL, "expenses/CreateExpenseEvenSplit3", "POST", json=request.get_json())
 
 
+@app.route("/expenses/UnevenSplitByDollar", methods=["POST"])
+def create_expense_uneven_dollar():
+    return forward(UNEVEN_SPLIT_URL, "ExpenseUnevenSplittingByDollar", "POST", json=request.get_json())
+
+
+@app.route("/expenses/UnevenSplitByPercentage", methods=["POST"])
+def create_expense_uneven_percentage():
+    return forward(UNEVEN_SPLIT_URL, "ExpenseUnevenSplittingByPercentage", "POST", json=request.get_json())
+
+
 @app.route("/GetGroupSummary", methods=["GET"])
 def get_group_summary():
     return forward(BASE_URL, "GetGroupSummary", "GET", params=request.args)
@@ -50,12 +62,12 @@ def delete_expense():
 
 @app.route("/GetExpensesSplit", methods=["GET"])
 def get_expenses_split():
-    return forward(BASE_URL, "GetExpensesSplit", "GET", params=request.args)
+    return forward(EXPENSES_SPLIT_URL, "GetExpensesSplit", "GET", params=request.args)
 
 
 @app.route("/GetExpensesSplitSummary", methods=["GET"])
 def get_expenses_split_summary():
-    return forward(BASE_URL, "GetExpensesSplitSummary", "GET", params=request.args)
+    return forward(EXPENSES_SPLIT_URL, "GetExpensesSplitSummary", "GET", params=request.args)
 
 
 if __name__ == "__main__":

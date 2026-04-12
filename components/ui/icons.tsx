@@ -3,28 +3,29 @@
 /**
  * Unified icon exports for SplitEase.
  *
- * Duo-icons (@duo-icons/react) are wrapped to accept a `size` prop so they
- * behave identically to the Phosphor icons they replace. Icons not available
- * in duo-icons are implemented as minimal inline SVGs.
+ * Phosphor icons are wrapped to accept a `size` prop so they behave
+ * identically to the previous icon API. Icons not available in Phosphor are
+ * implemented as minimal inline SVGs.
  */
 
 import React from 'react';
 import {
-  Bell as DuoBell,
-  Settings as DuoSettings,
-  Menu as DuoMenu,
-  AppDots as DuoAppDots,
-  CheckCircle as DuoCheckCircle,
-  CreditCard as DuoCreditCard,
-  Calendar as DuoCalendar,
-  Dashboard as DuoDashboard,
-  User as DuoUser,
-  Fire as DuoFire,
-  Rocket as DuoRocket,
-  Sun as DuoSun,
-  Moon2 as DuoMoon,
-  App as DuoApp,
-} from '@duo-icons/react';
+  BellSimple,
+  CalendarBlank,
+  CheckCircle,
+  CreditCard,
+  DotsThree,
+  FireSimple,
+  GearSix,
+  List,
+  Moon,
+  Rocket,
+  SquaresFour,
+  Sun,
+  UsersThree,
+  Wallet,
+} from '@phosphor-icons/react';
+import type { IconProps as PhosphorIconProps } from '@phosphor-icons/react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,28 +37,28 @@ interface IconProps {
   [key: string]: unknown;
 }
 
-// ─── Duo-icon wrappers (accept `size` like Phosphor) ─────────────────────────
+// ─── Icon wrappers (accept `size` like the previous API) ────────────────────
 
-function wrapDuo(DuoIcon: React.ComponentType<Record<string, unknown>>) {
+function wrapIcon(IconComponent: React.ComponentType<PhosphorIconProps>) {
   const Wrapped = ({ size = 20, className = '', weight: _weight, ...rest }: IconProps) =>
-    React.createElement(DuoIcon, { width: size, height: size, className, ...rest });
+    React.createElement(IconComponent, { size, className, ...rest });
   return Wrapped;
 }
 
-export const BellSimpleIcon    = wrapDuo(DuoBell);
-export const GearSixIcon       = wrapDuo(DuoSettings);
-export const ListIcon          = wrapDuo(DuoMenu);
-export const DotsThreeIcon     = wrapDuo(DuoAppDots);
-export const CheckCircleIcon   = wrapDuo(DuoCheckCircle);
-export const CreditCardIcon    = wrapDuo(DuoCreditCard);
-export const CalendarBlankIcon = wrapDuo(DuoCalendar);
-export const SquaresFourIcon   = wrapDuo(DuoDashboard);
-export const UsersThreeIcon    = wrapDuo(DuoUser);
-export const TrendUpIcon       = wrapDuo(DuoFire);
-export const SparkleIcon       = wrapDuo(DuoRocket);
-export const SunIcon           = wrapDuo(DuoSun);
-export const MoonIcon          = wrapDuo(DuoMoon);
-export const WalletIcon        = wrapDuo(DuoApp);
+export const BellSimpleIcon    = wrapIcon(BellSimple);
+export const GearSixIcon       = wrapIcon(GearSix);
+export const ListIcon          = wrapIcon(List);
+export const DotsThreeIcon     = wrapIcon(DotsThree);
+export const CheckCircleIcon   = wrapIcon(CheckCircle);
+export const CreditCardIcon    = wrapIcon(CreditCard);
+export const CalendarBlankIcon = wrapIcon(CalendarBlank);
+export const SquaresFourIcon   = wrapIcon(SquaresFour);
+export const UsersThreeIcon    = wrapIcon(UsersThree);
+export const TrendUpIcon       = wrapIcon(FireSimple);
+export const SparkleIcon       = wrapIcon(Rocket);
+export const SunIcon           = wrapIcon(Sun);
+export const MoonIcon          = wrapIcon(Moon);
+export const WalletIcon        = wrapIcon(Wallet);
 
 // ─── Custom SVG icons (not in duo-icons) ─────────────────────────────────────
 

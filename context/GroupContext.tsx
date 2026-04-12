@@ -18,9 +18,9 @@ async function getGroupsByUser(userId: number) {
   return res.json();
 }
 
-async function getGroupMember(groupId: number): Promise<GroupMemberResponse> {
+async function getGroupMember(groupId: number): Promise<GroupMemberResponse | null> {
   const res = await fetch(`${GROUP_API}/GetGroupMember?GroupId=${groupId}`);
-  if (!res.ok) throw new Error(`GetGroupMember failed with status ${res.status}`);
+  if (!res.ok) return null;
   return res.json();
 }
 
@@ -31,7 +31,12 @@ async function apiCreateGroup(name: string, createdBy: number): Promise<number> 
     body: JSON.stringify({ GroupName: name, CreatedBy: createdBy }),
   });
   if (!res.ok) throw new Error(`CreateGroup failed with status ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  // API may return a plain number or an object like { GroupId: 5 }
+  if (typeof data === 'number') return data;
+  if (data?.GroupId != null) return data.GroupId;
+  if (data?.Id != null) return data.Id;
+  throw new Error(`CreateGroup returned unexpected response: ${JSON.stringify(data)}`);
 }
 
 async function apiDeleteGroup(groupId: number): Promise<void> {
@@ -96,7 +101,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
 
       const fetchedGroups: GroupMemberResponse[] = [];
       results.forEach((result) => {
-        if (result.status === 'fulfilled') {
+        if (result.status === 'fulfilled' && result.value !== null) {
           fetchedGroups.push(result.value);
         }
       });
@@ -116,10 +121,16 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   const createNewGroup = useCallback(async (name: string, createdByUserId: number) => {
     const newGroupId = await apiCreateGroup(name, createdByUserId);
 
-    // Fetch the full group data
-    const groupData = await getGroupMember(newGroupId);
-    setGroups((prev) => [...prev, groupData]);
-  }, []);
+    // GetGroupMember 404s for brand-new groups; build a minimal placeholder
+    // so the group appears in the list immediately without an extra API call
+    const newGroup: GroupMemberResponse = {
+      Id: newGroupId,
+      GroupName: name,
+      CreatedBy: user?.Name ?? String(createdByUserId),
+      GroupMembers: user?.Name ? [user.Name] : [],
+    };
+    setGroups((prev) => [...prev, newGroup]);
+  }, [user]);
 
   const removeGroup = useCallback(async (groupId: number) => {
     await apiDeleteGroup(groupId);
@@ -131,7 +142,9 @@ export function GroupProvider({ children }: { children: ReactNode }) {
 
     // Refetch the group to get updated member list
     const updatedGroup = await getGroupMember(groupId);
-    setGroups((prev) => prev.map((g) => (g.Id === groupId ? updatedGroup : g)));
+    if (updatedGroup !== null) {
+      setGroups((prev) => prev.map((g) => (g.Id === groupId ? updatedGroup : g)));
+    }
   }, []);
 
   return (
