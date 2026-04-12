@@ -10,11 +10,12 @@ app = Flask(__name__)
 CORS(app)
 
 BASE_URL = os.getenv("NEXT_PUBLIC_EXPENSE_API_BASE_URL")
-PAY_EXPENSE_URL = os.getenv("NEXT_PUBLIC_PAY_EXPENSE_API_URL", "")
+EXPENSE_SUMMARY_URL = os.getenv("NEXT_PUBLIC_EXPENSE_SUMMARY_API_BASE_URL")
+EVEN_SPLIT_URL = os.getenv("NEXT_PUBLIC_EVEN_SPLIT_API_BASE_URL")
 
 
-def forward(path, method, params=None, json=None):
-    url = f"{BASE_URL}/{path}"
+def forward(base_url, path, method, params=None, json=None):
+    url = f"{base_url.rstrip('/')}/{path}"
     resp = requests.request(method, url, params=params, json=json)
     try:
         return jsonify(resp.json()), resp.status_code
@@ -24,38 +25,37 @@ def forward(path, method, params=None, json=None):
 
 @app.route("/expenses/CreateExpenseEvenSplit", methods=["POST"])
 def create_expense():
-    return forward("expenses/CreateExpenseEvenSplit", "POST", json=request.get_json())
+    return forward(BASE_URL, "expenses/CreateExpenseEvenSplit", "POST", json=request.get_json())
+
+
+@app.route("/expenses/CreateExpenseEvenSplit3", methods=["POST"])
+def create_expense_even_split3():
+    return forward(EVEN_SPLIT_URL, "expenses/CreateExpenseEvenSplit3", "POST", json=request.get_json())
 
 
 @app.route("/GetGroupSummary", methods=["GET"])
 def get_group_summary():
-    return forward("GetGroupSummary", "GET", params=request.args)
+    return forward(BASE_URL, "GetGroupSummary", "GET", params=request.args)
+
+
+@app.route("/GetGroupExpenseSummary2", methods=["GET"])
+def get_group_expense_summary2():
+    return forward(EXPENSE_SUMMARY_URL, "GetGroupExpenseSummary2", "GET", params=request.args)
 
 
 @app.route("/DeleteExpense", methods=["DELETE"])
 def delete_expense():
-    return forward("DeleteExpense", "DELETE", params=request.args)
+    return forward(BASE_URL, "DeleteExpense", "DELETE", params=request.args)
 
 
 @app.route("/GetExpensesSplit", methods=["GET"])
 def get_expenses_split():
-    return forward("GetExpensesSplit", "GET", params=request.args)
+    return forward(BASE_URL, "GetExpensesSplit", "GET", params=request.args)
 
 
 @app.route("/GetExpensesSplitSummary", methods=["GET"])
 def get_expenses_split_summary():
-    return forward("GetExpensesSplitSummary", "GET", params=request.args)
-
-
-@app.route("/PayExpense", methods=["POST"])
-def pay_expense():
-    if not PAY_EXPENSE_URL:
-        return jsonify({"error": "PAY_EXPENSE_URL is not configured"}), 500
-    resp = requests.post(PAY_EXPENSE_URL, json=request.get_json())
-    try:
-        return jsonify(resp.json()), resp.status_code
-    except Exception:
-        return resp.text, resp.status_code
+    return forward(BASE_URL, "GetExpensesSplitSummary", "GET", params=request.args)
 
 
 if __name__ == "__main__":

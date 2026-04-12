@@ -103,11 +103,11 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
         </p>
 
         <div className="flex flex-col gap-1">
-          {splitResult.map((split) => {
+          {splitResult.map((split, i) => {
             const owes = split.AmountOwed < 0;
             return (
               <div
-                key={split.UserId}
+                key={`${split.UserId}-${i}`}
                 className="flex items-center justify-between px-2 py-1.5 rounded-md bg-bg-card text-xs"
               >
                 <span className="text-text-body">{resolveUserName(split.UserId)}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,15 +13,19 @@ import {
   SpinnerGapIcon,
   CheckIcon,
   CheckCircleIcon,
+  MagnifyingGlassIcon,
+  XIcon,
 } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import AddExpensePanel from './AddExpensePanel';
+import DeleteGroupModal from './DeleteGroupModal';
+import ProcessingPaymentModal from './ProcessingPaymentModal';
 import { useGroups } from '@/context/GroupContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 
 function getInitials(name) {
-  return name
+  return String(name)
     .split(' ')
     .map((w) => w[0])
     .join('')
@@ -37,34 +42,39 @@ export default function GroupDetailView({ groupId }) {
 
   const [expenses, setExpenses] = useState(null);
   const [splitsMap, setSplitsMap] = useState({});
+  const [sharedByMap, setSharedByMap] = useState({});
   const [loadingExpenses, setLoadingExpenses] = useState(true);
   const [summaryVersion, setSummaryVersion] = useState(0);
 
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
 
-  const [isPayingAll, setIsPayingAll] = useState(false);
-  const [payAllSuccess, setPayAllSuccess] = useState(false);
-  const [payAllError, setPayAllError] = useState('');
+  const [balances, setBalances] = useState(null);
+  const [loadingBalances, setLoadingBalances] = useState(true);
 
   const [allUsers, setAllUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [isAddingMembers, setIsAddingMembers] = useState(false);
   const [addMemberError, setAddMemberError] = useState('');
 
-  const [involvementMap, setInvolvementMap] = useState({}); // { [ExpenseId]: Set<UserId> }
+  const [payingKey, setPayingKey] = useState(null);
+  const [payError, setPayError] = useState('');
+
+  const [txHistory, setTxHistory] = useState(null);
+  const [loadingTxHistory, setLoadingTxHistory] = useState(true);
 
   const [deletingExpenseId, setDeletingExpenseId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
 
   const members = group?.GroupMembers || [];
 
-  // Fetch expenses and user splits in parallel
   useEffect(() => {
     if (!groupId || !currentUser) return;
     let cancelled = false;
     setLoadingExpenses(true);
-    setPayAllSuccess(false);
     Promise.all([
       fetch(`/api/expense/GetGroupSummary?GroupId=${groupId}`)
         .then((res) => res.ok ? res.json() : Promise.reject(res.status)),
@@ -75,11 +85,10 @@ export default function GroupDetailView({ groupId }) {
         if (cancelled) return;
         setExpenses(summary || []);
         const map = {};
-        const involvement = {};
+        const sbMap = {};
         (summary2 || []).forEach((e) => {
           const sharedBy = e.SharedBy || [];
-          involvement[e.ExpenseId] = new Set(sharedBy);
-
+          sbMap[e.ExpenseId] = sharedBy;
           const inSharedBy = sharedBy.includes(currentUser.UserID);
           const isPayer =
             e.PaidBy === currentUser.Name ||
@@ -87,21 +96,18 @@ export default function GroupDetailView({ groupId }) {
           const myShare = inSharedBy && sharedBy.length > 0
             ? e.TotalAmount / sharedBy.length
             : 0;
-
           if (inSharedBy || isPayer) {
-            // negative = get back (shown green +), positive = owe (shown red)
             map[e.ExpenseId] = isPayer ? myShare - e.TotalAmount : myShare;
           }
         });
         setSplitsMap(map);
-        setInvolvementMap(involvement);
+        setSharedByMap(sbMap);
       })
-      .catch(() => { if (!cancelled) { setExpenses([]); setSplitsMap({}); setInvolvementMap({}); } })
+      .catch(() => { if (!cancelled) { setExpenses([]); setSplitsMap({}); } })
       .finally(() => { if (!cancelled) setLoadingExpenses(false); });
     return () => { cancelled = true; };
   }, [groupId, summaryVersion, currentUser]);
 
-  // Fetch all users (needed for name resolution and add member panel)
   useEffect(() => {
     if (!currentUser) return;
     let cancelled = false;
@@ -114,10 +120,22 @@ export default function GroupDetailView({ groupId }) {
     return () => { cancelled = true; };
   }, [currentUser]);
 
+  useEffect(() => {
+    if (!groupId) return;
+    let cancelled = false;
+    setLoadingTxHistory(true);
+    fetch(`/api/payment/GetTransactionByGroupId?GroupId=${groupId}`)
+      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+      .then((data) => { if (!cancelled) setTxHistory(data || []); })
+      .catch(() => { if (!cancelled) setTxHistory([]); })
+      .finally(() => { if (!cancelled) setLoadingTxHistory(false); });
+    return () => { cancelled = true; };
+  }, [groupId, summaryVersion]);
+
   const resolveUserName = (paidBy) => {
     const id = Number(paidBy);
     if (!isNaN(id)) {
-      if (currentUser && id === currentUser.UserID) return currentUser.Name;
+      if (currentUser && id === currentUser.UserID) return 'You';
       const found = allUsers.find((u) => u.UserId === id);
       if (found) return found.Name;
     }
@@ -127,6 +145,9 @@ export default function GroupDetailView({ groupId }) {
   const availableToAdd = allUsers.filter(
     (u) => !members.some((m) => m.toLowerCase() === u.Name.toLowerCase())
   );
+  const filteredUsers = memberSearch.trim()
+    ? availableToAdd.filter((u) => u.Name.toLowerCase().includes(memberSearch.toLowerCase()))
+    : availableToAdd;
 
   const toggleUserSelection = (userId) => {
     setSelectedUsers((prev) =>
@@ -142,6 +163,7 @@ export default function GroupDetailView({ groupId }) {
       await addMemberToGroup(groupId, selectedUsers);
       setSelectedUsers([]);
       setShowAddMember(false);
+      setMemberSearch('');
     } catch (err) {
       setAddMemberError(err instanceof Error ? err.message : 'Failed to add members');
     } finally {
@@ -149,13 +171,50 @@ export default function GroupDetailView({ groupId }) {
     }
   };
 
-  const handleDeleteGroup = async () => {
-    if (!confirm('Delete this group? This cannot be undone.')) return;
+  const handlePay = async (b) => {
+    const key = `${b.UserId}_${b.UserId2}`;
+    setPayingKey(key);
+    setPayError('');
+    try {
+      const payer = allUsers.find((u) => u.UserId === currentUser.UserID);
+      const recipient = allUsers.find((u) => u.UserId === b.UserId2);
+      const res = await fetch('/api/payment/CreditTransfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          GroupId: groupId,
+          PayeeId: currentUser.UserID,
+          PayeePhoneNumber: payer?.PhoneNumber || '',
+          PayeeCountryCode: '+65',
+          Beneficiary: {
+            Name: resolveUserName(b.UserId2),
+            Id: b.UserId2,
+            PhoneNumber: recipient?.PhoneNumber || '',
+            CountryCode: '+65',
+            TransactionAmount: b.AmountOwedTo,
+            Description: 'Group expense settlement',
+          },
+        }),
+      });
+      if (!res.ok) throw new Error(`Payment failed (${res.status})`);
+      setSummaryVersion((v) => v + 1);
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : 'Payment failed');
+    } finally {
+      setPayingKey(null);
+    }
+  };
+
+  const handleDeleteGroup = () => setShowDeleteModal(true);
+
+  const handleConfirmDelete = async () => {
+    setIsDeletingGroup(true);
     try {
       await removeGroup(groupId);
       router.push('/groups');
     } catch (err) {
       console.error('Failed to delete group:', err);
+      setIsDeletingGroup(false);
     }
   };
 
@@ -172,39 +231,17 @@ export default function GroupDetailView({ groupId }) {
     }
   };
 
-  const handlePayAll = async () => {
-    const outstanding = Object.entries(splitsMap)
-      .filter(([, amount]) => amount > 0)
-      .map(([expenseId, amount]) => ({ ExpenseId: Number(expenseId), Amount: amount }));
-
-    if (outstanding.length === 0) return;
-
-    setIsPayingAll(true);
-    setPayAllError('');
-    setPayAllSuccess(false);
-    try {
-      await Promise.all(
-        outstanding.map(({ ExpenseId, Amount }) =>
-          fetch('/api/pay-expense', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ GroupId: groupId, ExpenseId, UserId: currentUser.UserID, Amount }),
-          }).then((res) => {
-            if (!res.ok) throw new Error(`Payment failed for expense ${ExpenseId}`);
-          })
-        )
-      );
-      setPayAllSuccess(true);
-      setSummaryVersion((v) => v + 1);
-    } catch (err) {
-      setPayAllError(err instanceof Error ? err.message : 'Failed to pay expenses');
-    } finally {
-      setIsPayingAll(false);
-    }
-  };
-
-  const totalOwed = Object.values(splitsMap).reduce((sum, v) => sum + v, 0);
-  const hasOutstanding = totalOwed > 0;
+  useEffect(() => {
+    if (!groupId || !currentUser) return;
+    let cancelled = false;
+    setLoadingBalances(true);
+    fetch(`/api/balance/GetBalances?GroupId=${groupId}`)
+      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+      .then((data) => { if (!cancelled) setBalances(data || []); })
+      .catch(() => { if (!cancelled) setBalances([]); })
+      .finally(() => { if (!cancelled) setLoadingBalances(false); });
+    return () => { cancelled = true; };
+  }, [groupId, summaryVersion, currentUser]);
 
   if (!group) {
     return (
@@ -219,24 +256,28 @@ export default function GroupDetailView({ groupId }) {
 
   return (
     <div className="w-full">
+
       {/* Back link */}
       <Link
         href="/groups"
-        className="inline-flex items-center gap-1.5 text-xs text-text-secondary
-          hover:text-text-heading transition-colors duration-150 mb-5"
+        className="inline-flex items-center gap-1.5 text-xs text-text-muted
+          hover:text-text-heading transition-colors duration-150 mb-6"
       >
         <ArrowLeftIcon size={12} />
         Groups
       </Link>
 
-      {/* Group header */}
+      {/* ── Page title ── */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-text-heading">
+          <h2 className="text-2xl font-semibold font-display text-text-heading leading-tight">
             {group.GroupName}
           </h2>
-          <p className="text-xs text-text-muted mt-0.5">
-            Created by {group.CreatedBy}
+          <p className="text-xs text-text-muted mt-1">
+            {members.length} member{members.length !== 1 ? 's' : ''}
+            {!loadingExpenses && expenses && expenses.length > 0 && (
+              <> · {expenses.length} expense{expenses.length !== 1 ? 's' : ''}</>
+            )}
           </p>
         </div>
         <Button
@@ -250,35 +291,98 @@ export default function GroupDetailView({ groupId }) {
         </Button>
       </div>
 
-      {/* ── Members Section ── */}
-      <section className="bg-bg-card rounded-xl border border-border p-5 mb-4">
+      {/* ── Balance summary ── */}
+      {loadingBalances ? (
+        <div className="flex items-center gap-2 mb-6 text-text-muted text-xs">
+          <SpinnerGapIcon size={13} className="animate-spin" />
+          Loading balances…
+        </div>
+      ) : balances && balances.length === 0 ? (
+        <div className="flex items-center gap-2 mb-6 text-success text-sm font-medium">
+          <CheckCircleIcon size={15} weight="fill" />
+          All settled up in this group.
+        </div>
+      ) : balances && balances.length > 0 ? (() => {
+        const iOwe = balances.filter((b) => b.UserId === currentUser?.UserID);
+        const owedToMe = balances.filter((b) => b.UserId2 === currentUser?.UserID);
+        if (iOwe.length === 0 && owedToMe.length === 0) return null;
+        return (
+          <div className="bg-bg-card rounded-xl border border-border mb-6 overflow-hidden">
+            <div className="px-5 py-3 border-b border-border-light">
+              <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Balances</h3>
+            </div>
+            {payError && <p className="text-[11px] text-danger px-5 pt-2">{payError}</p>}
+            <div className="divide-y divide-border-light">
+              {iOwe.map((b, i) => {
+                const key = `${b.UserId}_${b.UserId2}`;
+                const isPaying = payingKey === key;
+                return (
+                <div key={i} className="flex items-center justify-between px-5 py-3.5">
+                  <div>
+                    <p className="text-xs text-text-muted">You owe</p>
+                    <p className="text-sm font-medium text-text-heading">{resolveUserName(b.UserId2)}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-danger tabular-nums">
+                      {formatCurrency(b.AmountOwedTo)}
+                    </span>
+                    <Button size="sm" onClick={() => handlePay(b)} disabled={isPaying}>
+                      {isPaying ? (
+                        <><SpinnerGapIcon size={13} className="animate-spin" />Processing…</>
+                      ) : (
+                        <><CreditCardIcon size={13} />Pay {formatCurrency(b.AmountOwedTo)}</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                );
+              })}
+              {owedToMe.map((b, i) => (
+                <div key={i} className="flex items-center justify-between px-5 py-3.5">
+                  <div>
+                    <p className="text-xs text-text-muted">Owes you</p>
+                    <p className="text-sm font-medium text-text-heading">{resolveUserName(b.UserId)}</p>
+                  </div>
+                  <span className="text-sm font-semibold text-success tabular-nums">
+                    +{formatCurrency(b.AmountOwedTo)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })() : null}
+
+      {/* ── Members — lightweight row ── */}
+      <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-text-heading">
-            Members <span className="text-text-muted font-normal">{members.length}</span>
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+            Members
           </h3>
           <Button
-            variant="outline"
+            variant="ghost"
             size="xs"
             onClick={() => {
               setShowAddMember((prev) => !prev);
               setShowAddExpense(false);
               setSelectedUsers([]);
               setAddMemberError('');
+              setMemberSearch('');
             }}
+            className="text-text-muted hover:text-primary"
           >
             <UserPlusIcon size={12} />
             Add
           </Button>
         </div>
 
-        {/* Member list */}
         <div className="flex flex-wrap gap-2">
           {members.map((name) => (
             <div
               key={name}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-bg-primary"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-bg-card border border-border"
             >
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-[8px] font-bold">
+              <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-white text-[8px] font-bold">
                 {getInitials(name)}
               </div>
               <span className="text-xs text-text-body">{name}</span>
@@ -286,61 +390,95 @@ export default function GroupDetailView({ groupId }) {
           ))}
         </div>
 
-        {/* Add member panel */}
         {showAddMember && (
-          <div className="mt-3 pt-3 border-t border-border-light">
+          <div className="mt-3 border border-border rounded-xl overflow-hidden bg-bg-card">
             {loadingUsers ? (
-              <div className="flex items-center justify-center py-3">
+              <div className="flex items-center justify-center py-6">
                 <SpinnerGapIcon size={16} className="animate-spin text-text-muted" />
               </div>
             ) : availableToAdd.length === 0 ? (
-              <p className="text-xs text-text-muted py-1">All available users are already members.</p>
+              <p className="text-xs text-text-muted px-3 py-3">All users are already members.</p>
             ) : (
-              <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
-                {availableToAdd.map((user) => {
-                  const isSelected = selectedUsers.includes(user.UserId);
-                  return (
+              <>
+                {/* Search */}
+                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border-light">
+                  <MagnifyingGlassIcon size={12} className="text-text-muted shrink-0" />
+                  <input
+                    type="text"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Search members…"
+                    className="text-xs flex-1 bg-transparent outline-none text-text-body placeholder:text-text-muted"
+                    autoFocus
+                  />
+                  {memberSearch && (
                     <button
-                      key={user.UserId}
-                      onClick={() => toggleUserSelection(user.UserId)}
-                      className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-left text-xs transition-colors duration-150
-                        ${isSelected
-                          ? 'bg-primary/10 text-primary border border-primary/30'
-                          : 'hover:bg-bg-primary text-text-body border border-transparent'
-                        }`}
+                      onClick={() => setMemberSearch('')}
+                      className="text-text-muted hover:text-text-body transition-colors"
                     >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold
-                        ${isSelected ? 'bg-primary text-white' : 'bg-primary/15 text-text-heading'}`}>
-                        {isSelected ? <CheckIcon size={12} /> : getInitials(user.Name)}
-                      </div>
-                      <span className="font-medium">{user.Name}</span>
+                      <XIcon size={12} />
                     </button>
-                  );
-                })}
-              </div>
-            )}
-            {addMemberError && <p className="text-[11px] text-danger mt-2">{addMemberError}</p>}
-            {availableToAdd.length > 0 && (
-              <Button
-                onClick={handleAddMembers}
-                disabled={selectedUsers.length === 0 || isAddingMembers}
-                size="sm"
-                className="w-full mt-2.5"
-              >
-                {isAddingMembers ? (
-                  <><SpinnerGapIcon size={12} className="animate-spin" />Adding...</>
-                ) : (
-                  `Add ${selectedUsers.length} member${selectedUsers.length !== 1 ? 's' : ''}`
+                  )}
+                </div>
+
+                {/* User list */}
+                <div className="max-h-[180px] overflow-y-auto divide-y divide-border-light">
+                  {filteredUsers.length === 0 ? (
+                    <p className="text-xs text-text-muted text-center py-4">
+                      No users match &ldquo;{memberSearch}&rdquo;
+                    </p>
+                  ) : (
+                    filteredUsers.map((user) => {
+                      const isSelected = selectedUsers.includes(user.UserId);
+                      return (
+                        <button
+                          key={user.UserId}
+                          onClick={() => toggleUserSelection(user.UserId)}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-bg-primary/60 transition-colors duration-100"
+                        >
+                          <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold transition-colors duration-100
+                            ${isSelected ? 'bg-primary text-white' : 'bg-primary/12 text-text-heading'}`}>
+                            {isSelected ? <CheckIcon size={11} /> : getInitials(user.Name)}
+                          </div>
+                          <span className="text-xs font-medium text-text-body flex-1">{user.Name}</span>
+                          {isSelected && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Footer */}
+                {addMemberError && (
+                  <p className="text-[11px] text-danger px-3 pt-2">{addMemberError}</p>
                 )}
-              </Button>
+                <div className="flex items-center justify-between px-3 py-2.5 border-t border-border-light">
+                  <span className="text-[11px] text-text-muted">
+                    {selectedUsers.length > 0 ? `${selectedUsers.length} selected` : 'Select members to add'}
+                  </span>
+                  <Button
+                    onClick={handleAddMembers}
+                    disabled={selectedUsers.length === 0 || isAddingMembers}
+                    size="sm"
+                  >
+                    {isAddingMembers ? (
+                      <><SpinnerGapIcon size={12} className="animate-spin" />Adding…</>
+                    ) : (
+                      `Add ${selectedUsers.length || ''}`
+                    )}
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         )}
-      </section>
+      </div>
 
-      {/* ── Expenses Section ── */}
-      <section className="bg-bg-card rounded-xl border border-border p-5">
-        <div className="flex items-center justify-between mb-3">
+      {/* ── Expenses ── */}
+      <section className="bg-bg-card rounded-xl border border-border">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
           <h3 className="text-sm font-semibold text-text-heading">Expenses</h3>
           <Button
             variant="outline"
@@ -351,15 +489,14 @@ export default function GroupDetailView({ groupId }) {
             }}
           >
             <ReceiptIcon size={12} />
-            Add Expense
+            Add expense
           </Button>
         </div>
 
-        {/* Add expense panel */}
         {showAddExpense && (
-          <div className="mb-4">
+          <div className="px-5 py-4 border-b border-border-light">
             {loadingUsers ? (
-              <div className="bg-bg-primary rounded-lg p-3 border border-border-light flex items-center justify-center py-6">
+              <div className="flex items-center justify-center py-6">
                 <SpinnerGapIcon size={16} className="animate-spin text-text-muted" />
               </div>
             ) : (
@@ -373,135 +510,153 @@ export default function GroupDetailView({ groupId }) {
           </div>
         )}
 
-        {/* Expense table */}
         {loadingExpenses ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-12">
             <SpinnerGapIcon size={18} className="animate-spin text-text-muted" />
           </div>
         ) : !expenses || expenses.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-xs text-text-muted">No expenses yet. Add one to get started.</p>
+          <div className="py-10 text-center flex flex-col items-center gap-2">
+            <Image src="/noExpense.webp" alt="No expenses" width={120} height={120} className="opacity-80" />
+            <p className="text-sm text-text-muted">No expenses yet.</p>
+            <button
+              onClick={() => setShowAddExpense(true)}
+              className="text-xs text-primary hover:text-primary-hover transition-colors duration-150"
+            >
+              Add the first one →
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            {(() => {
-              const memberColumns = members.map((name) => {
-                const user = allUsers.find((u) => u.Name.toLowerCase() === name.toLowerCase());
-                const isMe = user?.UserId === currentUser?.UserID;
-                return { name, userId: user?.UserId ?? null, isMe };
-              });
-              return (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border-light">
-                      <th className="text-left text-[11px] font-medium text-text-muted uppercase tracking-wider py-2 pr-4">Description</th>
-                      <th className="text-left text-[11px] font-medium text-text-muted uppercase tracking-wider py-2 pr-4">Paid By</th>
-                      <th className="text-left text-[11px] font-medium text-text-muted uppercase tracking-wider py-2 pr-4">Date</th>
-                      <th className="text-right text-[11px] font-medium text-text-muted uppercase tracking-wider py-2 pr-4">Total</th>
-                      <th className="text-right text-[11px] font-medium text-text-muted uppercase tracking-wider py-2 pr-4">Your Share</th>
-                      {memberColumns.map((m) => (
-                        <th key={m.name} className={`text-center text-[11px] font-medium uppercase tracking-wider py-2 px-2 ${m.isMe ? 'bg-primary/10 text-primary' : 'text-text-muted'}`}>
-                          {m.isMe ? '(You)' : m.name.split(' ')[0]}
-                        </th>
-                      ))}
-                      <th className="w-8" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expenses.map((e) => (
-                      <tr key={e.ExpenseId} className="border-b border-border-light last:border-0">
-                        <td className="py-2.5 pr-4 text-text-heading font-medium">{e.Description || 'Untitled'}</td>
-                        <td className="py-2.5 pr-4 text-text-secondary">{resolveUserName(e.PaidBy)}</td>
-                        <td className="py-2.5 pr-4 text-text-muted text-xs">{e.Date || '—'}</td>
-                        <td className="py-2.5 pr-4 text-right text-text-heading font-medium">{formatCurrency(e.TotalAmount)}</td>
-                        <td className="py-2.5 pr-4 text-right font-medium">
-                          {(() => {
-                            const amt = splitsMap[e.ExpenseId];
-                            if (amt == null) return <span className="text-text-muted">—</span>;
-                            if (amt === 0) return <span className="text-success text-xs">Settled</span>;
-                            if (amt < 0) return (
-                              <span className="text-success">
-                                +{formatCurrency(Math.abs(amt))}
-                              </span>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-light">
+                  <th className="text-left text-[11px] font-medium text-text-muted uppercase tracking-wider py-3 px-5">Description</th>
+                  <th className="text-left text-[11px] font-medium text-text-muted uppercase tracking-wider py-3 px-4">Paid by</th>
+                  <th className="text-left text-[11px] font-medium text-text-muted uppercase tracking-wider py-3 px-4 hidden md:table-cell">Split with</th>
+                  <th className="text-left text-[11px] font-medium text-text-muted uppercase tracking-wider py-3 px-4 hidden sm:table-cell">Date</th>
+                  <th className="text-right text-[11px] font-medium text-text-muted uppercase tracking-wider py-3 px-4">Total</th>
+                  <th className="text-right text-[11px] font-medium text-text-muted uppercase tracking-wider py-3 px-5">Your share</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.map((e) => {
+                  const shareAmt = splitsMap[e.ExpenseId];
+                  return (
+                    <tr key={e.ExpenseId} className="border-b border-border-light last:border-0 hover:bg-bg-primary/50 transition-colors duration-100">
+                      <td className="py-3.5 px-5 text-text-heading font-medium">
+                        {e.Description || 'Untitled'}
+                      </td>
+                      <td className="py-3.5 px-4 text-text-secondary text-xs">
+                        {resolveUserName(e.PaidBy)}
+                      </td>
+                      <td className="py-3.5 px-4 hidden md:table-cell">
+                        <div className="flex items-center gap-0.5">
+                          {(sharedByMap[e.ExpenseId] || []).map((uid) => {
+                            const name = resolveUserName(uid);
+                            const displayName = name === 'You' ? (currentUser?.Name || 'You') : name;
+                            return (
+                              <div key={uid} className="relative group/avatar">
+                                <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center text-[8px] font-bold text-text-heading cursor-default">
+                                  {getInitials(displayName)}
+                                </div>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded-md bg-gray-900 text-white text-[10px] whitespace-nowrap opacity-0 group-hover/avatar:opacity-100 pointer-events-none transition-opacity duration-150 z-20">
+                                  {displayName}
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                                </div>
+                              </div>
                             );
-                            return <span className="text-danger">{formatCurrency(amt)}</span>;
-                          })()}
-                        </td>
-                        {memberColumns.map((m) => (
-                          <td key={m.name} className={`py-2.5 px-2 text-center ${m.isMe ? 'bg-primary/5' : ''}`}>
-                            {m.userId != null && involvementMap[e.ExpenseId]?.has(m.userId)
-                              ? <CheckIcon size={13} className="text-success mx-auto" />
-                              : <span className="text-text-muted text-xs">—</span>
-                            }
-                          </td>
-                        ))}
-                        <td className="py-2.5 pl-2">
-                          <button
-                            onClick={() => handleDeleteExpense(e.ExpenseId)}
-                            disabled={deletingExpenseId === e.ExpenseId}
-                            className="p-1 rounded text-text-muted hover:text-danger transition-colors duration-150 disabled:opacity-40"
-                            title="Delete expense"
-                          >
-                            {deletingExpenseId === e.ExpenseId
-                              ? <SpinnerGapIcon size={12} className="animate-spin" />
-                              : <TrashIcon size={12} />
-                            }
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  {expenses.length > 1 && (
-                    <tfoot>
-                      <tr className="border-t border-border">
-                        <td colSpan={3 + memberColumns.length} className="py-2.5 pr-4 text-xs font-medium text-text-secondary">
-                          {expenses.length} expenses
-                        </td>
-                        <td className="py-2.5 pr-4 text-right text-sm font-semibold text-text-heading">
-                          {formatCurrency(expenses.reduce((sum, e) => sum + e.TotalAmount, 0))}
-                        </td>
-                        <td className={`py-2.5 text-right text-sm font-semibold ${totalOwed < 0 ? 'text-success' : 'text-danger'}`}>
-                          {totalOwed < 0 ? `+${formatCurrency(Math.abs(totalOwed))}` : formatCurrency(totalOwed)}
-                        </td>
-                        <td />
-                      </tr>
-                    </tfoot>
-                  )}
-                </table>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* Pay All */}
-        {!loadingExpenses && expenses && expenses.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border-light">
-            {payAllSuccess ? (
-              <div className="flex items-center gap-2 justify-center py-2 text-success text-sm font-medium">
-                <CheckCircleIcon size={16} weight="fill" />
-                All expenses paid!
-              </div>
-            ) : (
-              <>
-                {payAllError && <p className="text-[11px] text-danger mb-2 text-center">{payAllError}</p>}
-                <Button
-                  onClick={handlePayAll}
-                  disabled={isPayingAll || !hasOutstanding}
-                  className="w-full"
-                >
-                  {isPayingAll ? (
-                    <><SpinnerGapIcon size={14} className="animate-spin" />Processing payments...</>
-                  ) : (
-                    <><CreditCardIcon size={14} />
-                      {hasOutstanding ? `Pay All — ${formatCurrency(totalOwed)}` : 'Nothing to pay'}
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+                          })}
+                          {!(sharedByMap[e.ExpenseId]?.length) && (
+                            <span className="text-xs text-text-muted">—</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-text-muted text-xs hidden sm:table-cell">
+                        {e.Date || '—'}
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-text-secondary text-xs tabular-nums">
+                        {formatCurrency(e.TotalAmount)}
+                      </td>
+                      <td className="py-3.5 px-5 text-right font-semibold tabular-nums">
+                        {shareAmt == null ? (
+                          <span className="text-text-muted font-normal text-xs">—</span>
+                        ) : shareAmt === 0 ? (
+                          <span className="text-text-muted font-normal text-xs">Settled</span>
+                        ) : shareAmt < 0 ? (
+                          <span className="text-success">+{formatCurrency(Math.abs(shareAmt))}</span>
+                        ) : (
+                          <span className="text-danger">{formatCurrency(shareAmt)}</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 pr-4">
+                        <button
+                          onClick={() => handleDeleteExpense(e.ExpenseId)}
+                          disabled={deletingExpenseId === e.ExpenseId}
+                          className="p-1 rounded text-text-muted hover:text-danger transition-colors duration-150 disabled:opacity-40"
+                        >
+                          {deletingExpenseId === e.ExpenseId
+                            ? <SpinnerGapIcon size={12} className="animate-spin" />
+                            : <TrashIcon size={12} />
+                          }
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
+
+      {/* ── Payment History ── */}
+      <section className="bg-bg-card rounded-xl border border-border mt-6">
+        <div className="px-5 py-4 border-b border-border-light">
+          <h3 className="text-sm font-semibold text-text-heading">Payment History</h3>
+        </div>
+        {loadingTxHistory ? (
+          <div className="flex items-center justify-center py-10">
+            <SpinnerGapIcon size={18} className="animate-spin text-text-muted" />
+          </div>
+        ) : !txHistory || txHistory.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-sm text-text-muted">No payments made yet.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border-light">
+            {[...txHistory]
+              .sort((a, b) => new Date(b.DateTime) - new Date(a.DateTime))
+              .slice(0, 10)
+              .map((tx, i) => (
+                <div key={i} className="flex items-center justify-between px-5 py-3">
+                  <div>
+                    <p className="text-xs font-medium text-text-heading">
+                      {resolveUserName(tx.PaidBy)} paid {resolveUserName(tx.ReceivedBy)}
+                    </p>
+                    <p className="text-[11px] text-text-muted mt-0.5">
+                      {tx.DateTime ? new Date(tx.DateTime).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-text-heading tabular-nums">
+                    {formatCurrency(tx.Amount)}
+                  </span>
+                </div>
+              ))}
+          </div>
+        )}
+      </section>
+
+      <ProcessingPaymentModal open={payingKey !== null} />
+
+      <DeleteGroupModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+        groupName={group.GroupName}
+        isDeleting={isDeletingGroup}
+      />
+
     </div>
   );
 }

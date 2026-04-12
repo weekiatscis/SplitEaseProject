@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { SpinnerGapIcon } from '@/components/ui/icons';
 import { formatCurrency } from '@/lib/utils/formatCurrency';
 import { useAuth } from '@/context/AuthContext';
 
@@ -25,12 +24,21 @@ export default function DashboardGroupCard({ group }) {
     if (!user) return;
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/expense/GetExpensesSplitSummary?GroupId=${group.Id}`)
+    fetch(`/api/expense-summary/GetGroupExpenseSummary2?GroupId=${group.Id}`)
       .then((res) => res.ok ? res.json() : Promise.reject(res.status))
       .then((data) => {
         if (!cancelled) {
-          const entry = (data || []).find((d) => d.UserId === user.UserID);
-          setAmountOwed(entry ? entry.AmountOwedSum : 0);
+          let net = 0;
+          (data || []).forEach((e) => {
+            const sharedBy = e.SharedBy || [];
+            const inSharedBy = sharedBy.includes(user.UserID);
+            const isPayer = e.PaidBy === user.Name || Number(e.PaidBy) === user.UserID;
+            const myShare = inSharedBy && sharedBy.length > 0 ? e.TotalAmount / sharedBy.length : 0;
+            if (inSharedBy || isPayer) {
+              net += isPayer ? myShare - e.TotalAmount : myShare;
+            }
+          });
+          setAmountOwed(net);
         }
       })
       .catch(() => { if (!cancelled) setAmountOwed(0); })
@@ -38,58 +46,69 @@ export default function DashboardGroupCard({ group }) {
     return () => { cancelled = true; };
   }, [group.Id, user]);
 
+  const isOwed = amountOwed !== null && amountOwed < 0;
+  const isOwing = amountOwed !== null && amountOwed > 0;
+  const isSettled = amountOwed !== null && amountOwed === 0;
+
   return (
-    <div className="bg-bg-card rounded-xl border border-border p-5 flex flex-col justify-between">
-      {/* Group name */}
-      <h4 className="text-base font-semibold text-text-heading mb-3">
-        {group.GroupName}
-      </h4>
+    <Link href={`/groups/${group.Id}`} className="block card-interactive">
+      <div className="bg-bg-card rounded-xl border border-border p-5 flex flex-col gap-5">
 
-      {/* Member avatars */}
-      <div className="flex -space-x-1.5 mb-4">
-        {members.slice(0, 5).map((name) => (
-          <div
-            key={name}
-            title={name}
-            className="w-7 h-7 rounded-full bg-primary
-              flex items-center justify-center text-white text-[9px] font-bold
-              border-2 border-bg-card"
-          >
-            {getInitials(name)}
-          </div>
-        ))}
-        {members.length > 5 && (
-          <div
-            className="w-7 h-7 rounded-full bg-bg-primary
-              flex items-center justify-center text-text-muted text-[9px] font-bold
-              border-2 border-bg-card"
-          >
-            +{members.length - 5}
-          </div>
-        )}
-      </div>
+        {/* Balance — primary visual anchor */}
+        <div>
+          {loading ? (
+            <div className="flex flex-col gap-2">
+              <div className="h-7 w-28 rounded-md bg-border animate-pulse" />
+              <div className="h-3 w-16 rounded bg-border animate-pulse" />
+            </div>
+          ) : (
+            <div>
+              <p className={`text-2xl font-bold tracking-tight leading-none ${
+                isOwed ? 'text-success' : isOwing ? 'text-danger' : 'text-text-muted'
+              }`}>
+                {isOwed
+                  ? `+${formatCurrency(Math.abs(amountOwed))}`
+                  : isSettled
+                  ? '—'
+                  : formatCurrency(amountOwed)}
+              </p>
+              <p className="text-xs text-text-muted mt-1.5">
+                {isOwed ? 'owed to you' : isOwing ? 'you owe' : 'settled up'}
+              </p>
+            </div>
+          )}
+        </div>
 
-      {/* Amount owed */}
-      <div className="mb-4">
-        <p className="text-[11px] text-text-muted uppercase tracking-wide mb-0.5">
-          you owe
-        </p>
-        {loading ? (
-          <SpinnerGapIcon size={18} className="animate-spin text-text-muted mt-1" />
-        ) : (
-          <p className="text-2xl font-bold text-text-heading tracking-tight">
-            {formatCurrency(amountOwed)}
+        {/* Group name + members — secondary */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-text-heading truncate mr-3">
+            {group.GroupName}
           </p>
-        )}
-      </div>
+          <div className="flex -space-x-1.5 shrink-0">
+            {members.slice(0, 4).map((name) => (
+              <div
+                key={name}
+                title={name}
+                className="w-6 h-6 rounded-full bg-primary
+                  flex items-center justify-center text-white text-[8px] font-bold
+                  border-2 border-bg-card"
+              >
+                {getInitials(name)}
+              </div>
+            ))}
+            {members.length > 4 && (
+              <div
+                className="w-6 h-6 rounded-full bg-bg-primary
+                  flex items-center justify-center text-text-muted text-[8px] font-bold
+                  border-2 border-bg-card"
+              >
+                +{members.length - 4}
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* View link */}
-      <Link
-        href={`/groups/${group.Id}`}
-        className="text-xs font-medium text-primary hover:text-primary-hover transition-colors duration-150"
-      >
-        View expenses →
-      </Link>
-    </div>
+      </div>
+    </Link>
   );
 }

@@ -9,11 +9,12 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", "..", ".en
 app = Flask(__name__)
 CORS(app)
 
-BASE_URL = os.getenv("NEXT_PUBLIC_GROUP_API_BASE_URL")
+GROUP_BASE_URL = os.getenv("NEXT_PUBLIC_GROUP_API_BASE_URL")
+GROUPMEMBER_BASE_URL = os.getenv("NEXT_PUBLIC_GROUPMEMBER_API_BASE_URL")
 
 
-def forward(path, method, params=None, json=None):
-    url = f"{BASE_URL}/{path}"
+def forward(base_url, path, method, params=None, json=None):
+    url = f"{base_url.rstrip('/')}/{path}"
     resp = requests.request(method, url, params=params, json=json)
     try:
         return jsonify(resp.json()), resp.status_code
@@ -23,42 +24,42 @@ def forward(path, method, params=None, json=None):
 
 @app.route("/GetGroupsByUser", methods=["GET"])
 def get_groups_by_user():
-    return forward("GetGroupsByUser", "GET", params=request.args)
+    return forward(GROUP_BASE_URL, "GetGroupsByUser", "GET", params=request.args)
 
 
 @app.route("/GetGroup", methods=["GET"])
 def get_group():
-    return forward("GetGroup", "GET", params=request.args)
+    return forward(GROUP_BASE_URL, "GetGroup", "GET", params=request.args)
 
 
 @app.route("/GetGroupMember", methods=["GET"])
 def get_group_member():
-    return forward("GetGroupMember", "GET", params=request.args)
+    return forward(GROUPMEMBER_BASE_URL, "GetGroupMember", "GET", params=request.args)
 
 
 @app.route("/groups/create", methods=["POST"])
 def create_group():
-    return forward("groups/create", "POST", json=request.get_json())
+    return forward(GROUP_BASE_URL, "groups/create", "POST", json=request.get_json())
 
 
 @app.route("/groups/addMember", methods=["POST"])
 def add_member():
-    return forward("groups/addMember", "POST", json=request.get_json())
+    return forward(GROUPMEMBER_BASE_URL, "groups/addMember", "POST", json=request.get_json())
 
 
 @app.route("/UpdateGroup", methods=["PUT"])
 def update_group():
-    return forward("UpdateGroup", "PUT", json=request.get_json())
+    return forward(GROUP_BASE_URL, "UpdateGroup", "PUT", json=request.get_json())
 
 
 @app.route("/DeleteGroup", methods=["DELETE"])
 def delete_group():
-    return forward("DeleteGroup", "DELETE", params=request.args)
+    return forward(GROUP_BASE_URL, "DeleteGroup", "DELETE", params=request.args)
 
 
 @app.route("/DeleteGroupMember", methods=["DELETE"])
 def delete_group_member():
-    return forward("DeleteGroupMember", "DELETE", json=request.get_json())
+    return forward(GROUPMEMBER_BASE_URL, "DeleteGroupMember", "DELETE", json=request.get_json())
 
 
 if __name__ == "__main__":

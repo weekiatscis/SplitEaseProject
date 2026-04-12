@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { MagnifyingGlassIcon, BellSimpleIcon, GearSixIcon, ListIcon, SignOutIcon } from '@/components/ui/icons';
+import { MagnifyingGlassIcon, ListIcon, SignOutIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 
@@ -24,8 +24,8 @@ export default function Header({ onMenuToggle, title = 'Expenses', subtitle = "H
           <ListIcon size={20} />
         </Button>
         <div>
-          <h2 className="text-lg font-semibold text-text-heading">{title}</h2>
-          <p className="text-sm text-text-secondary">{subtitle}</p>
+          <h2 className="text-xl font-semibold font-display text-text-heading">{title}</h2>
+          {subtitle && <p className="text-sm text-text-secondary mt-0.5">{subtitle}</p>}
         </div>
       </div>
 
@@ -51,26 +51,6 @@ export default function Header({ onMenuToggle, title = 'Expenses', subtitle = "H
             "
           />
         </div>
-
-        {/* Notifications */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="relative rounded-lg"
-          aria-label="Notifications"
-        >
-          <BellSimpleIcon size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" />
-        </Button>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-lg"
-          aria-label="Settings"
-        >
-          <GearSixIcon size={18} />
-        </Button>
 
         <div className="relative ml-2">
           <button

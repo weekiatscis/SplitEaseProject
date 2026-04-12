@@ -1,25 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async rewrites() {
-    const rules = [];
+    return [
+      // Auth / Users — Flask auth_service (port 5001)
+      { source: '/api/users/:path*', destination: 'http://localhost:5001/:path*' },
 
-    // Users / Auth API (Login, GetAllUsers, users/create)
-    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-      rules.push({
-        source: '/api/users/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
-      });
-    }
+      // Groups — Flask group_service (port 5002)
+      { source: '/api/groups/:path*', destination: 'http://localhost:5002/:path*' },
 
-    // Pay-expense (single POST endpoint) — only added when env var is present
-    if (process.env.NEXT_PUBLIC_PAY_EXPENSE_API_URL) {
-      rules.push({
-        source: '/api/pay-expense',
-        destination: process.env.NEXT_PUBLIC_PAY_EXPENSE_API_URL,
-      });
-    }
+      // Expense summary — Flask expense_service (port 5003)
+      // Must come before /api/expense/:path* to avoid prefix collision
+      { source: '/api/expense-summary/:path*', destination: 'http://localhost:5003/:path*' },
 
-    return rules;
+      // Even split — Flask expense_service (port 5003)
+      { source: '/api/even-split/:path*', destination: 'http://localhost:5003/:path*' },
+
+      // Expense — Flask expense_service (port 5003)
+      { source: '/api/expense/:path*', destination: 'http://localhost:5003/:path*' },
+
+      // Balance + payment — Flask payment_service (port 5004)
+      { source: '/api/balance/:path*', destination: 'http://localhost:5004/:path*' },
+      { source: '/api/payment/:path*', destination: 'http://localhost:5004/:path*' },
+    ];
   },
 };
 

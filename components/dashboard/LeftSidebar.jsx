@@ -4,9 +4,20 @@ import { usePathname } from 'next/navigation';
 import { WalletIcon } from '@/components/ui/icons';
 import { navigationItems } from '@/lib/data/navigation';
 import NavItem from '@/components/sidebar/NavItem';
+import { useAuth } from '@/context/AuthContext';
+
+function getInitials(name) {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default function LeftSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <aside className="hidden md:flex flex-col h-screen bg-bg-sidebar border-r border-border w-[240px] fixed left-0 top-0 z-30">
@@ -16,7 +27,7 @@ export default function LeftSidebar() {
           <WalletIcon size={18} className="text-white" />
         </div>
         <div>
-          <h1 className="text-base font-bold text-text-heading leading-tight">SplitEase</h1>
+          <h1 className="text-base font-bold font-display text-text-heading leading-tight">SplitEase</h1>
           <p className="text-[10px] text-text-muted leading-tight">Split Bills Easily</p>
         </div>
       </div>
@@ -37,8 +48,20 @@ export default function LeftSidebar() {
         </ul>
       </nav>
 
-      {/* Bottom spacer */}
-      <div className="mt-auto" />
+      {/* User anchor */}
+      {user && (
+        <div className="px-4 py-4 border-t border-border">
+          <div className="flex items-center gap-2.5 px-2">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {getInitials(user.Name || 'U')}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-text-heading truncate leading-tight">{user.Name}</p>
+              <p className="text-[11px] text-text-muted truncate leading-tight">{user.Email}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
