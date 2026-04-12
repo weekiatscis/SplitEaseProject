@@ -23,11 +23,8 @@ export default function LeftSidebar() {
     <aside className="hidden md:flex flex-col h-screen bg-bg-sidebar border-r border-border w-[240px] fixed left-0 top-0 z-30">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-6">
-        <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-          <WalletIcon size={18} className="text-white" />
-        </div>
         <div>
-          <h1 className="text-base font-bold font-display text-text-heading leading-tight">SplitEase</h1>
+          <h1 className="text-[20px] font-bold font-display text-text-heading leading-tight pb-2">SplitEase</h1>
           <p className="text-[10px] text-text-muted leading-tight">Split Bills Easily</p>
         </div>
       </div>

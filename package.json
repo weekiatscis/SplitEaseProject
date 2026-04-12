@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev\" \"python flask-backend/auth_service/app.py\" \"python flask-backend/group_service/app.py\" \"python flask-backend/expense_service/app.py\" \"python flask-backend/payment_service/app.py\"",
     "build": "next build",
     "start": "next start"
   },
@@ -30,6 +30,7 @@
     "@types/node": "^25.4.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   }
