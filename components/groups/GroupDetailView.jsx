@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import AddExpensePanel from './AddExpensePanel';
 import DeleteGroupModal from './DeleteGroupModal';
+import DeleteExpenseModal from './DeleteExpenseModal';
 import ProcessingPaymentModal from './ProcessingPaymentModal';
 import { useGroups } from '@/context/GroupContext';
 import { useAuth } from '@/context/AuthContext';
@@ -144,6 +145,7 @@ export default function GroupDetailView({ groupId }) {
   const [loadingTxHistory, setLoadingTxHistory] = useState(true);
 
   const [deletingExpenseId, setDeletingExpenseId] = useState(null);
+  const [pendingDeleteExpenseId, setPendingDeleteExpenseId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
 
@@ -297,7 +299,12 @@ export default function GroupDetailView({ groupId }) {
     }
   };
 
-  const handleDeleteExpense = async (expenseId) => {
+  const handleDeleteExpense = (expenseId) => {
+    setPendingDeleteExpenseId(expenseId);
+  };
+
+  const handleConfirmDeleteExpense = async () => {
+    const expenseId = pendingDeleteExpenseId;
     setDeletingExpenseId(expenseId);
     try {
       const res = await fetch(`/api/expense/DeleteExpense?ExpenseId=${expenseId}`, { method: 'DELETE' });
@@ -307,6 +314,7 @@ export default function GroupDetailView({ groupId }) {
       console.error('Failed to delete expense:', err);
     } finally {
       setDeletingExpenseId(null);
+      setPendingDeleteExpenseId(null);
     }
   };
 
@@ -676,8 +684,7 @@ export default function GroupDetailView({ groupId }) {
                         >
                           {deletingExpenseId === e.ExpenseId
                             ? <SpinnerGapIcon size={12} className="animate-spin" />
-                            : <TrashIcon size={12} />
-                          }
+                            : <TrashIcon size={12} />}
                         </button>
                       </td>
                     </tr>
@@ -727,6 +734,14 @@ export default function GroupDetailView({ groupId }) {
       </section>
 
       <ProcessingPaymentModal open={payingKey !== null} />
+
+      <DeleteExpenseModal
+        open={pendingDeleteExpenseId !== null}
+        onClose={() => setPendingDeleteExpenseId(null)}
+        onConfirm={handleConfirmDeleteExpense}
+        expenseName={expenses?.find((e) => e.ExpenseId === pendingDeleteExpenseId)?.Description || 'This expense'}
+        isDeleting={deletingExpenseId !== null}
+      />
 
       <DeleteGroupModal
         open={showDeleteModal}
