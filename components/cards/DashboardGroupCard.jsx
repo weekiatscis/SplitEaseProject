@@ -55,7 +55,7 @@ export default function DashboardGroupCard({ group }) {
             const amountOwed = Number(row?.AmountOwed || 0);
             // UI uses positive as "you owe" and negative as "owed to you".
             const current = mySplitByExpenseId.get(expenseId) || 0;
-            mySplitByExpenseId.set(expenseId, current + (-amountOwed));
+            mySplitByExpenseId.set(expenseId, current + amountOwed);
           });
 
           (data || []).forEach((e) => {
