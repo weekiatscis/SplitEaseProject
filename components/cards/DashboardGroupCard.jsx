@@ -45,7 +45,7 @@ export default function DashboardGroupCard({ group }) {
             return false;
           };
 
-          const getExpenseId = (row) => Number(row?.ExpenseId ?? row?.ExpenseID ?? row?.Id);
+          const getExpenseId = (row) => Number(row?.ExpensesId ?? row?.ExpenseId ?? row?.ExpenseID);
 
           (splitRows || []).forEach((row) => {
             const rowUserId = row?.UserId ?? row?.UserID ?? row?.Name;

@@ -155,17 +155,49 @@ export default function GroupDetailView({ groupId }) {
     if (!groupId || !currentUser) return;
     let cancelled = false;
     setLoadingExpenses(true);
-    fetch(`/api/expense-summary/GetGroupExpenseSummary2?GroupId=${groupId}`)
-      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
-      .then((summary2) => {
+    Promise.all([
+      fetch(`/api/expense-summary/GetGroupExpenseSummary2?GroupId=${groupId}`)
+        .then((res) => res.ok ? res.json() : Promise.reject(res.status)),
+      fetch(`/api/expense/GetExpensesSplit?GroupId=${groupId}`)
+        .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+        .catch(() => []),
+    ])
+      .then(([summary2, splitRows]) => {
         if (cancelled) return;
         setExpenses(summary2 || []);
         const map = {};
         const sbMap = {};
 
+        const sameUser = (value) => {
+          const asNum = Number(value);
+          if (!Number.isNaN(asNum) && asNum === Number(currentUser.UserID)) return true;
+          if (typeof value === 'string' && typeof currentUser.Name === 'string') {
+            return value.trim().toLowerCase() === currentUser.Name.trim().toLowerCase();
+          }
+          return false;
+        };
+        const getExpenseId = (row) => Number(row?.ExpensesId ?? row?.ExpenseId ?? row?.ExpenseID);
+
+        const mySplitByExpenseId = new Map();
+        (splitRows || []).forEach((row) => {
+          const rowUserId = row?.UserId ?? row?.UserID ?? row?.Name;
+          if (!sameUser(rowUserId)) return;
+          const expenseId = getExpenseId(row);
+          if (Number.isNaN(expenseId)) return;
+          const amountOwed = Number(row?.AmountOwed || 0);
+          const current = mySplitByExpenseId.get(expenseId) || 0;
+          mySplitByExpenseId.set(expenseId, current + (-amountOwed));
+        });
+
         (summary2 || []).forEach((e) => {
           const sharedBy = e.SharedBy || [];
           sbMap[e.ExpenseId] = sharedBy;
+
+          const fromSplit = mySplitByExpenseId.get(Number(e.ExpenseId));
+          if (fromSplit !== undefined) {
+            map[e.ExpenseId] = fromSplit;
+            return;
+          }
 
           const inSharedBy = sharedBy.includes(currentUser.UserID);
           const isPayer =
