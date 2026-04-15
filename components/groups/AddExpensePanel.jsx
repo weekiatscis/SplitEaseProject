@@ -87,7 +87,7 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
       let url, body;
 
       if (splitType === 'even') {
-        url = '/api/even-split/expenses/CreateExpenseEvenSplit3';
+        url = '/api/even-split/ExpenseEvenSplitting';
         body = {
           GroupId: group.Id,
           AmountOwed: parsedAmount,
@@ -156,7 +156,7 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
 
         <div className="flex flex-col gap-1">
           {(Array.isArray(splitResult) ? splitResult : []).map((split, i) => {
-            const owes = split.AmountOwed < 0;
+            const owes = split.AmountOwed > 0;
             return (
               <div
                 key={`${split.UserId}-${i}`}
