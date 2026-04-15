@@ -39,12 +39,21 @@ splitease/
 
    pip install -r flask-backend/requirements.txt
 
-4. Run the app
-   
+4. Run in development (frontend + all Flask services):
+
    npm run dev
 
+5. Build for production:
 
-This starts the Next.js frontend and all four Flask services concurrently.
+   npm run build
+
+6. Run production stack (frontend + all Flask services):
+
+   npm start
+
+For frontend-only production server, use:
+
+   npm run start:web
 
 | Service          | Port |
 |------------------|------|

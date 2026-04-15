@@ -56,4 +56,4 @@ def get_transaction_by_group_id():
 
 
 if __name__ == "__main__":
-    app.run(port=5004, debug=True)
+    app.run(port=5004, debug=True, use_reloader=False)

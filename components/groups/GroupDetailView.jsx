@@ -186,7 +186,7 @@ export default function GroupDetailView({ groupId }) {
           if (Number.isNaN(expenseId)) return;
           const amountOwed = Number(row?.AmountOwed || 0);
           const current = mySplitByExpenseId.get(expenseId) || 0;
-          mySplitByExpenseId.set(expenseId, current + (-amountOwed));
+          mySplitByExpenseId.set(expenseId, current + amountOwed);
         });
 
         (summary2 || []).forEach((e) => {

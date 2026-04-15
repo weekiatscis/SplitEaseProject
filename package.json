@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "concurrently \"next dev\" \"python flask-backend/auth_service/app.py\" \"python flask-backend/group_service/app.py\" \"python flask-backend/expense_service/app.py\" \"python flask-backend/payment_service/app.py\"",
     "build": "next build",
-    "start": "next start"
+    "start": "concurrently \"next start\" \"python flask-backend/auth_service/app.py\" \"python flask-backend/group_service/app.py\" \"python flask-backend/expense_service/app.py\" \"python flask-backend/payment_service/app.py\"",
+    "start:web": "next start"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

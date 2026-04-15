@@ -19,6 +19,7 @@ export default function ProcessingPaymentModal({ open }) {
               height={200}
               className="select-none"
               priority
+              unoptimized
             />
 
             <Dialog.Title className="text-xl font-semibold font-display text-text-heading mt-5">
