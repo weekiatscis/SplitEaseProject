@@ -87,7 +87,7 @@ export default function AddExpensePanel({ group, allUsers, onClose, onExpenseAdd
       let url, body;
 
       if (splitType === 'even') {
-        url = '/api/even-split/expenses/CreateExpenseEvenSplit3';
+        url = '/api/even-split/ExpenseEvenSplitting';
         body = {
           GroupId: group.Id,
           AmountOwed: parsedAmount,

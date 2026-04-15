@@ -30,9 +30,9 @@ def create_expense():
     return forward(BASE_URL, "expenses/CreateExpenseEvenSplit", "POST", json=request.get_json())
 
 
-@app.route("/expenses/CreateExpenseEvenSplit3", methods=["POST"])
-def create_expense_even_split3():
-    return forward(EVEN_SPLIT_URL, "expenses/CreateExpenseEvenSplit3", "POST", json=request.get_json())
+@app.route("/ExpenseEvenSplitting", methods=["POST"])
+def create_expense_even_splitting():
+    return forward(EVEN_SPLIT_URL, "ExpenseEvenSplitting", "POST", json=request.get_json())
 
 
 @app.route("/expenses/UnevenSplitByDollar", methods=["POST"])

@@ -24,57 +24,20 @@ export default function DashboardGroupCard({ group }) {
     if (!user) return;
     let cancelled = false;
     setLoading(true);
-    Promise.all([
-      fetch(`/api/expense-summary/GetGroupExpenseSummary2?GroupId=${group.Id}`)
-        .then((res) => res.ok ? res.json() : Promise.reject(res.status)),
-      fetch(`/api/expense/GetExpensesSplit?GroupId=${group.Id}`)
-        .then((res) => res.ok ? res.json() : Promise.reject(res.status))
-        .catch(() => []),
-    ])
-      .then(([data, splitRows]) => {
-        if (!cancelled) {
-          let net = 0;
-          const mySplitByExpenseId = new Map();
-
-          const sameUser = (value) => {
-            const asNum = Number(value);
-            if (!Number.isNaN(asNum) && asNum === Number(user.UserID)) return true;
-            if (typeof value === 'string' && typeof user.Name === 'string') {
-              return value.trim().toLowerCase() === user.Name.trim().toLowerCase();
-            }
-            return false;
-          };
-
-          const getExpenseId = (row) => Number(row?.ExpensesId ?? row?.ExpenseId ?? row?.ExpenseID);
-
-          (splitRows || []).forEach((row) => {
-            const rowUserId = row?.UserId ?? row?.UserID ?? row?.Name;
-            if (!sameUser(rowUserId)) return;
-            const expenseId = getExpenseId(row);
-            if (Number.isNaN(expenseId)) return;
-            const amountOwed = Number(row?.AmountOwed || 0);
-            // UI uses positive as "you owe" and negative as "owed to you".
-            const current = mySplitByExpenseId.get(expenseId) || 0;
-            mySplitByExpenseId.set(expenseId, current + amountOwed);
-          });
-
-          (data || []).forEach((e) => {
-            const fromSplit = mySplitByExpenseId.get(Number(e.ExpenseId));
-            if (fromSplit !== undefined) {
-              net += fromSplit;
-              return;
-            }
-
-            const sharedBy = e.SharedBy || [];
-            const inSharedBy = sharedBy.includes(user.UserID);
-            const isPayer = e.PaidBy === user.Name || Number(e.PaidBy) === user.UserID;
-            const myShare = inSharedBy && sharedBy.length > 0 ? e.TotalAmount / sharedBy.length : 0;
-            if (inSharedBy || isPayer) {
-              net += isPayer ? myShare - e.TotalAmount : myShare;
-            }
-          });
-          setAmountOwed(net);
-        }
+    fetch(`/api/balance/GetBalances?GroupId=${group.Id}`)
+      .then((res) => res.ok ? res.json() : Promise.reject(res.status))
+      .then((balances) => {
+        if (cancelled) return;
+        // Amounts I owe (I am UserId)
+        const iOwe = (balances || [])
+          .filter((b) => b.UserId === user.UserID)
+          .reduce((sum, b) => sum + Number(b.AmountOwedTo), 0);
+        // Amounts owed to me (I am UserId2)
+        const owedToMe = (balances || [])
+          .filter((b) => b.UserId2 === user.UserID)
+          .reduce((sum, b) => sum + Number(b.AmountOwedTo), 0);
+        // Positive = I owe, negative = owed to me
+        setAmountOwed(iOwe - owedToMe);
       })
       .catch(() => { if (!cancelled) setAmountOwed(0); })
       .finally(() => { if (!cancelled) setLoading(false); });
